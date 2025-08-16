@@ -1,45 +1,26 @@
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+
+@Slf4j
 public class Main {
   public static void main(String[] args){
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.out.println("Logs from your program will appear here!");
 
-//      Uncomment this block to pass the first stage
-        ServerSocket serverSocket = null;
-        Socket clientSocket = null;
         int port = 6379;
+        EventLoop eventLoop = new EventLoop();
+
         try {
-          serverSocket = new ServerSocket(port);
-          // Since the tester restarts your program quite often, setting SO_REUSEADDR
-          // ensures that we don't run into 'Address already in use' errors
-          serverSocket.setReuseAddress(true);
-          // Wait for connection from client.
-          clientSocket = serverSocket.accept();
-          var out = clientSocket.getOutputStream();
-          var command = clientSocket.getInputStream();
-
-          byte[] buffer = new byte[1024];
-
-          while ( command.read(buffer) != -1 ) {
-
-//            String inputString = new String(input).trim();
-            out.write("+PONG\r\n".getBytes());
-          }
+            eventLoop.configure(port);
+            eventLoop.run();
 
         } catch (IOException e) {
-          System.out.println("IOException: " + e.getMessage());
-        } finally {
-          try {
-            if (clientSocket != null) {
-              clientSocket.close();
-            }
-          } catch (IOException e) {
-            System.out.println("IOException: " + e.getMessage());
-          }
+            log.error("Error during server processing: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("An unexpected error occurred: {}", e.getMessage(), e);
         }
+
   }
 }
