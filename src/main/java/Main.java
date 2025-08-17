@@ -1,4 +1,6 @@
+import commands.Command;
 import lombok.extern.slf4j.Slf4j;
+import parser.Parser;
 
 import java.io.IOException;
 
@@ -9,12 +11,13 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
         int port = 6379;
-        EventLoop eventLoop = new EventLoop();
+        Parser parser = new Parser();
+        Command executor = new Command();
+        EventLoop eventLoop = new EventLoop(parser, executor);
 
         try {
             eventLoop.configure(port);
             eventLoop.run();
-
         } catch (IOException e) {
             log.error("Error during server processing: {}", e.getMessage(), e);
             throw new RuntimeException(e);
