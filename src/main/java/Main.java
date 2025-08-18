@@ -1,6 +1,7 @@
 import commands.Command;
 import lombok.extern.slf4j.Slf4j;
 import parser.Parser;
+import store.KeyValueStore;
 
 import java.io.IOException;
 
@@ -11,8 +12,10 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
         int port = 6379;
+        KeyValueStore kvStore = new KeyValueStore();
         Parser parser = new Parser();
-        Command executor = new Command();
+
+        Command executor = new Command(kvStore);
         EventLoop eventLoop = new EventLoop(parser, executor);
 
         try {

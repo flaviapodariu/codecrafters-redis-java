@@ -1,7 +1,4 @@
 import commands.Command;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import parser.Parser;
 
@@ -112,7 +109,7 @@ class EventLoop {
             var parsedCommand = parser.parse(attachedBuffer);
 
             if (parsedCommand instanceof List<?> commandItems) {
-                if(commandItems.getFirst() instanceof String commandName) {
+                if(commandItems.getFirst() instanceof String) {
                     output = executor.execute((List<String>) commandItems);
                 }
             }
