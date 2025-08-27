@@ -1,38 +1,36 @@
 package commands.strategies;
 
 import commands.CommandStrategy;
+import commands.ProtocolUtils;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import static commands.Errors.checkArgNumber;
-import static commands.ProtocolUtils.NULL_STRING;
-import static commands.ProtocolUtils.encode;
 
+@Slf4j
 @AllArgsConstructor
-public class GetStrategy implements CommandStrategy {
-
+public class LrangeStrategy implements CommandStrategy {
     private final KeyValueStore kvStore;
 
     @Override
     public ByteBuffer execute(List<String> args) {
-
-        var err = checkArgNumber(args, 1, 1);
+        var err = checkArgNumber(args, 3, 3);
         if (err != null) {
             return err;
         }
 
         var key = args.getFirst();
-        var value = kvStore.getValue(key);
+        var start = Integer.parseInt(args.get(1));
+        var stop = Integer.parseInt(args.get(2));
 
-        if (value == null) {
-            return ByteBuffer.wrap(NULL_STRING.getBytes());
-        }
+        var retrievedRange = kvStore.getRange(key, start, stop);
 
         return ByteBuffer.wrap(
-                encode(String.valueOf(value)).getBytes()
+                ProtocolUtils.encode(retrievedRange).getBytes()
         );
     }
 }

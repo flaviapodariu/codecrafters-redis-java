@@ -7,7 +7,7 @@ import java.util.List;
 
 @Slf4j
 public class Errors {
-    private static final String INVALID_ARGS_NUMBER = "Invalid number of arguments for %s operation";
+    private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs) {
@@ -15,12 +15,10 @@ public class Errors {
     }
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs, int maxArgs) {
-        var command = args.getFirst();
         if (args.size() < minArgs || args.size() > maxArgs) {
-            var msg = String.format(INVALID_ARGS_NUMBER, command);
-            log.error(msg);
+            log.error(INVALID_ARGS_NUMBER);
             return ByteBuffer.wrap(
-                    ProtocolUtils.encodeSimpleError(msg).getBytes()
+                    ProtocolUtils.encodeSimpleError(INVALID_ARGS_NUMBER).getBytes()
             );
         }
         return null;

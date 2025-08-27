@@ -36,18 +36,18 @@ public class SetStrategy implements CommandStrategy {
      */
     @Override
     public ByteBuffer execute(List<String> args) {
-        var err = checkArgNumber(args, 3, 6);
+        var err = checkArgNumber(args, 2, 5);
         if (err != null) {
             return err;
         }
 
-        var key = args.get(1);
-        var value = args.get(2);
+        var key = args.getFirst();
+        var value = args.get(1);
         var ttl = Long.MAX_VALUE;
         Expiry expiry = null;
         String condition = null;
 
-        int curr = 3;
+        int curr = 2;
         while (curr < args.size()) {
             var currArg = args.get(curr).toUpperCase();
             switch (currArg) {

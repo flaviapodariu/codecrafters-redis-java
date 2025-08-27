@@ -20,13 +20,13 @@ public class RpushStrategy implements CommandStrategy {
     @Override
     public ByteBuffer execute(List<String> args) {
 
-        var err = checkArgNumber(args, 3);
+        var err = checkArgNumber(args, 2);
         if (err != null) {
             return err;
         }
 
-        var key = args.get(1);
-        List<String> values = args.subList(2, args.size());
+        var key = args.getFirst();
+        List<String> values = args.subList(1, args.size());
 
         try {
             var elements = kvStore.append(key, values.toArray(new String[0]));

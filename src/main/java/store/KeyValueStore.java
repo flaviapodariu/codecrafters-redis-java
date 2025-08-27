@@ -51,13 +51,35 @@ public class KeyValueStore {
         if (listObject != null) {
 //            assuming list<string> for now
 //            TODO ugly af
-            list = (LinkedList<String>) listObject;
+            list = (ArrayList<String>) listObject;
             list.addAll(Arrays.stream(value).toList());
         } else {
-            list = new LinkedList<>(Arrays.stream(value).toList());
+            list = new ArrayList<>(Arrays.stream(value).toList());
             addValue(key, list, new NoExpiry());
         }
         return list.size();
+    }
+
+    /**
+     *  Get elements in a list given a range of indexes
+     * @param key the key storing the list
+     * @param start start index (inclusive)
+     * @param stop stop index (inclusive)
+     * @return a list of elements
+     */
+    public List<String> getRange(String key, int start, int stop) {
+        if (!containsKey(key)) {
+            return Collections.emptyList();
+        }
+        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
+        if (start >= list.size() || start > stop) {
+            return Collections.emptyList();
+        }
+        if (stop >= list.size()) {
+            stop = list.size() - 1;
+        }
+
+        return list.subList(start, stop+1);
     }
 
     public boolean containsKey(String key) {

@@ -6,14 +6,19 @@ import commands.ProtocolUtils;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static commands.Errors.checkArgNumber;
+
 public class EchoStrategy implements CommandStrategy {
     @Override
     public ByteBuffer execute(List<String> args) {
-        if (args.size() == 2) {
-            return ByteBuffer.wrap(
-                    ProtocolUtils.encode(args.get(1)).getBytes()
-            );
+
+        var err = checkArgNumber(args, 1, 1);
+        if (err != null) {
+            return err;
         }
-        throw new IllegalArgumentException("Incorrect number of arguments");
+
+        return ByteBuffer.wrap(
+                ProtocolUtils.encode(args.getFirst()).getBytes()
+        );
     }
 }

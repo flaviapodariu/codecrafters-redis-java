@@ -17,7 +17,8 @@ public class Command {
                 "ECHO", new EchoStrategy(),
                 "GET", new GetStrategy(kvStore),
                 "SET", new SetStrategy(kvStore),
-                "RPUSH", new RpushStrategy(kvStore)
+                "RPUSH", new RpushStrategy(kvStore),
+                "LRANGE", new LrangeStrategy(kvStore)
         );
     }
 
@@ -29,6 +30,6 @@ public class Command {
             throw new IllegalArgumentException(String.format("Command %s does not exist", command));
         }
 
-        return strategy.execute(args);
+        return strategy.execute(args.subList(1, args.size()));
     }
 }
