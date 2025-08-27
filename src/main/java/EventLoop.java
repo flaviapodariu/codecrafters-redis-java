@@ -110,6 +110,7 @@ class EventLoop {
 
             if (parsedCommand instanceof List<?> commandItems) {
                 if(commandItems.getFirst() instanceof String) {
+                    // TODO try to fix ugly cast
                     output = executor.execute((List<String>) commandItems);
                 }
             }

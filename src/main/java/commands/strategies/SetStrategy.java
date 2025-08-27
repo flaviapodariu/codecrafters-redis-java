@@ -1,6 +1,7 @@
 package commands.strategies;
 
 import commands.CommandStrategy;
+import commands.ProtocolUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.*;
@@ -9,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.List;
 
+import static commands.Errors.checkArgNumber;
 import static commands.ProtocolUtils.NULL_STRING;
 import static commands.ProtocolUtils.OK;
 
@@ -17,6 +19,7 @@ import static commands.ProtocolUtils.OK;
 public class SetStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
+    private static final String INVALID_ARGS_NUMBER = "Invalid number of arguments for SET operation";
 
     /**
      * SET operation implementation.
@@ -33,10 +36,9 @@ public class SetStrategy implements CommandStrategy {
      */
     @Override
     public ByteBuffer execute(List<String> args) {
-        if (args.size() < 3 || args.size() > 6) {
-            log.error("Invalid number of arguments for SET operation");
-            // TODO
-            return ByteBuffer.wrap("".getBytes());
+        var err = checkArgNumber(args, 3, 6);
+        if (err != null) {
+            return err;
         }
 
         var key = args.get(1);
@@ -52,9 +54,10 @@ public class SetStrategy implements CommandStrategy {
                 case "EX":
                 case "PX":
                     if (curr + 1 >= args.size()) {
-                        //TODO return an error response  NULL for now ...
-                        log.error("Optional argument {} requires a positive integer for expiry", args.get(curr));
-                        return ByteBuffer.wrap(NULL_STRING.getBytes());
+                        String msg = String.format("Optional argument %s requires a positive integer for expiry", args.get(curr));
+                        log.error(msg);
+                        return ByteBuffer.wrap(
+                                ProtocolUtils.encodeSimpleError(msg).getBytes());
                     }
                     if (currArg.equals("EX")) {
                         ttl = Long.parseLong(args.get(curr+1)) * 1000;
@@ -67,9 +70,11 @@ public class SetStrategy implements CommandStrategy {
                 case "EXAT":
                 case "PXAT":
                     if (curr + 1 >= args.size()) {
-                        //TODO return an error response  NULL for now ...
-                        log.error("Optional argument {} requires a positive integer for the expiry timestamp", args.get(curr));
-                        return ByteBuffer.wrap(NULL_STRING.getBytes());
+                        String msg = String.format("Optional argument %s requires a positive integer for the expiry timestamp", args.get(curr));
+                        log.error(msg);
+                        return ByteBuffer.wrap(
+                                ProtocolUtils.encodeSimpleError(msg).getBytes()
+                        );
                     }
 
                     if (currArg.equals("EXAT")) {
@@ -101,9 +106,11 @@ public class SetStrategy implements CommandStrategy {
         try {
             kvStore.addValue(key, value, expiry);
         } catch (Exception e) {
-            log.error("Could not save the key-value pair {}-{}", key, value);
-            // TODO
-            return ByteBuffer.wrap("".getBytes());
+            String msg = String.format("Could not save the key-value pair %s-%s", key, value);
+            log.error(msg);
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(msg).getBytes()
+            );
         }
 
         return ByteBuffer.wrap(OK.getBytes());

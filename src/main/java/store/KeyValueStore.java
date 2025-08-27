@@ -3,10 +3,7 @@ package store;
 import lombok.AllArgsConstructor;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -47,17 +44,17 @@ public class KeyValueStore {
      * @param value value to add
      * @return the number of elements in the list
      */
-    public int append(String key, String value) {
+    public int append(String key, String... value) {
         var listObject = this.simpleKeyValueStore.get(key);
         List<String> list;
 
         if (listObject != null) {
 //            assuming list<string> for now
+//            TODO ugly af
             list = (LinkedList<String>) listObject;
-            list.add(value);
+            list.addAll(Arrays.stream(value).toList());
         } else {
-            list = new LinkedList<>();
-            list.add(value);
+            list = new LinkedList<>(Arrays.stream(value).toList());
             addValue(key, list, new NoExpiry());
         }
         return list.size();
