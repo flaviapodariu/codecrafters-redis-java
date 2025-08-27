@@ -33,7 +33,7 @@ public class SetStrategy implements CommandStrategy {
      */
     @Override
     public ByteBuffer execute(List<String> args) {
-        if (args.size() < 2 || args.size() > 6) {
+        if (args.size() < 3 || args.size() > 6) {
             log.error("Invalid number of arguments for SET operation");
             // TODO
             return ByteBuffer.wrap("".getBytes());
@@ -56,7 +56,6 @@ public class SetStrategy implements CommandStrategy {
                         log.error("Optional argument {} requires a positive integer for expiry", args.get(curr));
                         return ByteBuffer.wrap(NULL_STRING.getBytes());
                     }
-
                     if (currArg.equals("EX")) {
                         ttl = Long.parseLong(args.get(curr+1)) * 1000;
                     } else {

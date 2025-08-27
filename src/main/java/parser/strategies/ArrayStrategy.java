@@ -14,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ArrayStrategy implements ParserStrategy {
-
     private Parser parser;
 
     @Override
