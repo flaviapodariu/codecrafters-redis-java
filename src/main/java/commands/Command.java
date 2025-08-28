@@ -19,7 +19,8 @@ public class Command {
                 "SET", new SetStrategy(kvStore),
                 "RPUSH", new RpushStrategy(kvStore),
                 "LPUSH", new LpushStrategy(kvStore),
-                "LRANGE", new LrangeStrategy(kvStore)
+                "LRANGE", new LrangeStrategy(kvStore),
+                "LLEN", new LlenStrategy(kvStore)
         );
     }
 
