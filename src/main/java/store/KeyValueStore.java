@@ -107,6 +107,20 @@ public class KeyValueStore {
         return list.subList(start, stop+1);
     }
 
+    public String removeFirst(String key) {
+        if (!containsKey(key)) {
+            return null;
+        }
+
+        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
+
+        if (list.isEmpty()) {
+            return null;
+        }
+
+        return list.removeFirst();
+    }
+
     public boolean containsKey(String key) {
         return this.simpleKeyValueStore.containsKey(key);
     }

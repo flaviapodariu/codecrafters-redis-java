@@ -20,7 +20,8 @@ public class Command {
                 "RPUSH", new RpushStrategy(kvStore),
                 "LPUSH", new LpushStrategy(kvStore),
                 "LRANGE", new LrangeStrategy(kvStore),
-                "LLEN", new LlenStrategy(kvStore)
+                "LLEN", new LlenStrategy(kvStore),
+                "LPOP", new LpopStrategy(kvStore)
         );
     }
 
