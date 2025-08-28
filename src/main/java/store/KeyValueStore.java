@@ -72,6 +72,11 @@ public class KeyValueStore {
             return Collections.emptyList();
         }
         var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
+
+
+        start = convertNegativeIndex(start,  list.size());
+        stop = convertNegativeIndex(stop,  list.size());
+
         if (start >= list.size() || start > stop) {
             return Collections.emptyList();
         }
@@ -80,6 +85,12 @@ public class KeyValueStore {
         }
 
         return list.subList(start, stop+1);
+    }
+
+
+    private Integer convertNegativeIndex(int index, int listSize) {
+        var converted = index >= 0 ? index : index + listSize;
+        return Math.max(converted, 0);
     }
 
     public boolean containsKey(String key) {
