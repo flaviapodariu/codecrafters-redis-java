@@ -1,4 +1,4 @@
-package store;
+package store.expiry;
 
 import lombok.AllArgsConstructor;
 

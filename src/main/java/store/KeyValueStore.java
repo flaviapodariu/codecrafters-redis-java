@@ -1,6 +1,8 @@
 package store;
 
 import lombok.AllArgsConstructor;
+import store.expiry.Expiry;
+import store.expiry.NoExpiry;
 
 import java.time.Instant;
 import java.util.*;
@@ -41,10 +43,10 @@ public class KeyValueStore {
      * Method used with RPUSH command. Adds a value to an existing list at given key
      * or creates the list and adds the element there if the key does not exist
      * @param key given key
-     * @param value value to add
+     * @param values values to add
      * @return the number of elements in the list
      */
-    public int append(String key, String... value) {
+    public int append(String key, List<String> values) {
         var listObject = this.simpleKeyValueStore.get(key);
         List<String> list;
 
@@ -52,9 +54,27 @@ public class KeyValueStore {
 //            assuming list<string> for now
 //            TODO ugly af
             list = (ArrayList<String>) listObject;
-            list.addAll(Arrays.stream(value).toList());
+            list.addAll(values);
         } else {
-            list = new ArrayList<>(Arrays.stream(value).toList());
+            list = new ArrayList<>(values);
+            addValue(key, list, new NoExpiry());
+        }
+        return list.size();
+    }
+
+    public int prepend(String key, List<String> values) {
+        var listObject = this.simpleKeyValueStore.get(key);
+        List<String> list;
+
+        if (listObject != null) {
+//            assuming list<string> for now
+//            TODO ugly af
+            list = (ArrayList<String>) listObject;
+            for (var item: values) {
+                list.addFirst(item);
+            }
+        } else {
+            list = new ArrayList<>(values.reversed());
             addValue(key, list, new NoExpiry());
         }
         return list.size();
@@ -71,8 +91,8 @@ public class KeyValueStore {
         if (!containsKey(key)) {
             return Collections.emptyList();
         }
-        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
 
+        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
 
         start = convertNegativeIndex(start,  list.size());
         stop = convertNegativeIndex(stop,  list.size());
@@ -87,15 +107,10 @@ public class KeyValueStore {
         return list.subList(start, stop+1);
     }
 
-
-    private Integer convertNegativeIndex(int index, int listSize) {
-        var converted = index >= 0 ? index : index + listSize;
-        return Math.max(converted, 0);
-    }
-
     public boolean containsKey(String key) {
         return this.simpleKeyValueStore.containsKey(key);
     }
+
 
     private void removeKey(String key) {
         this.simpleKeyValueStore.remove(key);
@@ -103,5 +118,9 @@ public class KeyValueStore {
         this.keysExpiry.remove(key);
     }
 
+    private Integer convertNegativeIndex(int index, int listSize) {
+        var converted = index >= 0 ? index : index + listSize;
+        return Math.max(converted, 0);
+    }
 
 }

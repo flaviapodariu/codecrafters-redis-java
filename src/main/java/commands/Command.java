@@ -18,6 +18,7 @@ public class Command {
                 "GET", new GetStrategy(kvStore),
                 "SET", new SetStrategy(kvStore),
                 "RPUSH", new RpushStrategy(kvStore),
+                "LPUSH", new LpushStrategy(kvStore),
                 "LRANGE", new LrangeStrategy(kvStore)
         );
     }

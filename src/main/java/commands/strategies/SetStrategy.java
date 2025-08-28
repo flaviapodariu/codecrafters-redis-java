@@ -5,6 +5,10 @@ import commands.ProtocolUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.*;
+import store.expiry.Expiry;
+import store.expiry.NoExpiry;
+import store.expiry.TTLExpiry;
+import store.expiry.UNIXExpiry;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -19,7 +23,6 @@ import static commands.ProtocolUtils.OK;
 public class SetStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
-    private static final String INVALID_ARGS_NUMBER = "Invalid number of arguments for SET operation";
 
     /**
      * SET operation implementation.

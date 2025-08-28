@@ -13,13 +13,12 @@ import static commands.Errors.checkArgNumber;
 
 @Slf4j
 @AllArgsConstructor
-public class RpushStrategy implements CommandStrategy {
+public class LpushStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
 
     @Override
     public ByteBuffer execute(List<String> args) {
-
         var err = checkArgNumber(args, 2);
         if (err != null) {
             return err;
@@ -29,7 +28,7 @@ public class RpushStrategy implements CommandStrategy {
         List<String> values = args.subList(1, args.size());
 
         try {
-            var elements = kvStore.append(key, values);
+            var elements = kvStore.prepend(key, values);
             return ByteBuffer.wrap(
                     ProtocolUtils.encode(elements).getBytes()
             );
@@ -42,5 +41,4 @@ public class RpushStrategy implements CommandStrategy {
             );
         }
     }
-
 }
