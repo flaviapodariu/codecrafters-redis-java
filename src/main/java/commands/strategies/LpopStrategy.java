@@ -19,19 +19,30 @@ public class LpopStrategy implements CommandStrategy {
 
     @Override
     public ByteBuffer execute(List<String> args) {
-        var err = checkArgNumber(args, 1, 1);
+        var err = checkArgNumber(args, 1, 2);
         if (err != null) {
             return err;
         }
 
         var key = args.getFirst();
-        var removedItem = kvStore.removeFirst(key);
-        if (removedItem == null) {
+        int numItems = 1;
+
+        if (args.size() == 2) {
+            numItems = Integer.parseInt(args.get(1));
+        }
+        var removedItems = kvStore.removeItems(key, numItems);
+        if (removedItems == null) {
             return ByteBuffer.wrap(NULL_STRING.getBytes());
         }
 
+        if (removedItems.size() == 1) {
+            return ByteBuffer.wrap(
+                ProtocolUtils.encode(removedItems.getFirst()).getBytes()
+            );
+        }
+
         return ByteBuffer.wrap(
-                ProtocolUtils.encode(removedItem).getBytes()
+                ProtocolUtils.encode(removedItems).getBytes()
         );
     }
 }

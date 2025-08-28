@@ -120,10 +120,12 @@ class EventLoop {
                 key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
             } else {
                 key.interestOps(SelectionKey.OP_READ);
+
             }
             attachedBuffer.compact();
         }
     }
+
 
     private void handleWrite(SelectionKey key) throws IOException {
         SocketChannel clientSocket = (SocketChannel) key.channel();
