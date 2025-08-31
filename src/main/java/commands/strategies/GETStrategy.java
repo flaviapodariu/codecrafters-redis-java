@@ -12,7 +12,7 @@ import static commands.ProtocolUtils.NULL_STRING;
 import static commands.ProtocolUtils.encode;
 
 @AllArgsConstructor
-public class GetStrategy implements CommandStrategy {
+public class GETStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
 

@@ -8,7 +8,7 @@ import java.util.List;
 
 import static commands.Errors.checkArgNumber;
 
-public class EchoStrategy implements CommandStrategy {
+public class ECHOStrategy implements CommandStrategy {
     @Override
     public ByteBuffer execute(List<String> args) {
 

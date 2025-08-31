@@ -20,7 +20,7 @@ import static commands.ProtocolUtils.OK;
 
 @Slf4j
 @AllArgsConstructor
-public class SetStrategy implements CommandStrategy {
+public class SETStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
 

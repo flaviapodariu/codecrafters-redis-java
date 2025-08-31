@@ -1,4 +1,4 @@
-import commands.Command;
+import commands.CommandHandler;
 import lombok.extern.slf4j.Slf4j;
 import parser.Parser;
 import store.KeyValueStore;
@@ -15,8 +15,7 @@ public class Main {
         KeyValueStore kvStore = new KeyValueStore();
         Parser parser = new Parser();
 
-        Command executor = new Command(kvStore);
-        EventLoop eventLoop = new EventLoop(parser, executor);
+        EventLoop eventLoop = new EventLoop(parser, kvStore);
 
         try {
             eventLoop.configure(port);

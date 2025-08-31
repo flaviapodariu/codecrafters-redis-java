@@ -4,11 +4,9 @@ import lombok.AllArgsConstructor;
 import store.expiry.Expiry;
 import store.expiry.NoExpiry;
 
+import java.nio.channels.SocketChannel;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -62,6 +60,7 @@ public class KeyValueStore {
             list = new ArrayList<>(values);
             addValue(key, list, new NoExpiry());
         }
+
         return list.size();
     }
 
@@ -110,6 +109,11 @@ public class KeyValueStore {
         return list.subList(start, stop+1);
     }
 
+    public String removeFirst(String key) {
+        var removedItem = removeItems(key, 1);
+        return removedItem != null ? removedItem.getFirst() : null;
+    }
+
     public List<String> removeItems(String key, int n) {
         if (!containsKey(key)) {
             return null;
@@ -121,7 +125,7 @@ public class KeyValueStore {
             return null;
         }
 
-        if (n >= list.size()) {
+        if (n > list.size()) {
             return list;
         }
 

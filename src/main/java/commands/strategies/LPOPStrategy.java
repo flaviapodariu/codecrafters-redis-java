@@ -14,7 +14,7 @@ import static commands.ProtocolUtils.NULL_STRING;
 
 @Slf4j
 @AllArgsConstructor
-public class LpopStrategy implements CommandStrategy {
+public class LPOPStrategy implements CommandStrategy {
     private final KeyValueStore kvStore;
 
     @Override
@@ -44,5 +44,9 @@ public class LpopStrategy implements CommandStrategy {
         return ByteBuffer.wrap(
                 ProtocolUtils.encode(removedItems).getBytes()
         );
+    }
+
+    public String execute(String key) {
+        return this.kvStore.removeFirst(key);
     }
 }

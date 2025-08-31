@@ -1,5 +1,6 @@
 package commands.strategies;
 
+import commands.BlockingClientManager;
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
 import lombok.AllArgsConstructor;
@@ -13,9 +14,10 @@ import static commands.Errors.checkArgNumber;
 
 @Slf4j
 @AllArgsConstructor
-public class RpushStrategy implements CommandStrategy {
+public class RPUSHStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
+    private final BlockingClientManager blockingClientManager;
 
     @Override
     public ByteBuffer execute(List<String> args) {
@@ -30,6 +32,7 @@ public class RpushStrategy implements CommandStrategy {
 
         try {
             var elements = kvStore.append(key, values);
+            this.blockingClientManager.unblockClient(key);
             return ByteBuffer.wrap(
                     ProtocolUtils.encode(elements).getBytes()
             );

@@ -1,6 +1,8 @@
-import commands.Command;
+import commands.AsyncCommandObserver;
+import commands.CommandHandler;
 import lombok.extern.slf4j.Slf4j;
 import parser.Parser;
+import store.KeyValueStore;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -9,22 +11,40 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static commands.ProtocolUtils.NULL_STRING;
+
 @Slf4j
-class EventLoop {
+class EventLoop implements AsyncCommandObserver {
 
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
 
-    private final Command executor;
+    private final CommandHandler executor;
     private final Parser parser;
 
-    public EventLoop(Parser parser, Command executor) {
+    public EventLoop(Parser parser, KeyValueStore kvStore) {
         this.parser = parser;
-        this.executor = executor;
+        this.executor = new CommandHandler(kvStore, this);
+    }
+
+    /**
+     * Callback for async commands to register responses for waiting clients
+     * @param channel client's socket channel
+     * @param response the response
+     */
+    @Override
+    public void onResponseReady(SocketChannel channel, ByteBuffer response) {
+        try {
+            channel.register(this.selector, SelectionKey.OP_WRITE,  response);
+            selector.wakeup();
+        } catch (IOException e) {
+            log.error("Could not register response");
+        }
     }
 
     /**
@@ -54,6 +74,8 @@ class EventLoop {
         while (true) {
             selector.select();
 
+            checkClientTimeouts();
+
             Set<SelectionKey> selectedKeys = this.selector.selectedKeys();
             Iterator<SelectionKey> keysIterator = selectedKeys.iterator();
 
@@ -74,21 +96,7 @@ class EventLoop {
         }
     }
 
-
-    private void handleAccept(SelectionKey key) throws IOException {
-        var serverSocket = (ServerSocketChannel) key.channel();
-        SocketChannel clientSocket = serverSocket.accept();
-
-        if (clientSocket != null) {
-            clientSocket.configureBlocking(false);
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            clientSocket.register(this.selector, SelectionKey.OP_READ, buffer);
-            log.info("Accepted new connection from client at {}", clientSocket.getRemoteAddress());
-        }
-
-    }
-
-    private void handleRead(SelectionKey key) throws IOException {
+    public void handleRead(SelectionKey key) throws IOException {
         SocketChannel clientSocket = (SocketChannel) key.channel();
         clientSocket.configureBlocking(false);
 
@@ -105,27 +113,44 @@ class EventLoop {
         if (readBytes > 0) {
             attachedBuffer.flip();
 
-            ByteBuffer output = null;
             var parsedCommand = parser.parse(attachedBuffer);
 
             if (parsedCommand instanceof List<?> commandItems) {
                 if(commandItems.getFirst() instanceof String) {
                     // TODO try to fix ugly cast
-                    output = executor.execute((List<String>) commandItems);
+                    executor.execute((List<String>) commandItems, clientSocket);
                 }
             }
-
-            if (output != null && output.hasRemaining()) {
-                key.attach(output);
-                key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-            } else {
-                key.interestOps(SelectionKey.OP_READ);
-
-            }
-            attachedBuffer.compact();
         }
     }
 
+    private void checkClientTimeouts() {
+        var timeouts = this.executor.getClientTimeouts();
+        if (!timeouts.isEmpty()) {
+            timeouts.forEach( (client, t) -> {
+                var waitingForKey = this.executor.getReverseLookupClient().get(client);
+
+                if (t.isBefore(Instant.now())) {
+                    onResponseReady(client, ByteBuffer.wrap(NULL_STRING.getBytes()));
+                    this.executor.unblockClient(waitingForKey);
+                }
+            });
+        }
+    }
+
+
+    private void handleAccept(SelectionKey key) throws IOException {
+        var serverSocket = (ServerSocketChannel) key.channel();
+        SocketChannel clientSocket = serverSocket.accept();
+
+        if (clientSocket != null) {
+            clientSocket.configureBlocking(false);
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            clientSocket.register(this.selector, SelectionKey.OP_READ, buffer);
+            log.info("Accepted new connection from client at {}", clientSocket.getRemoteAddress());
+        }
+
+    }
 
     private void handleWrite(SelectionKey key) throws IOException {
         SocketChannel clientSocket = (SocketChannel) key.channel();
@@ -137,6 +162,7 @@ class EventLoop {
             key.attach(ByteBuffer.allocate(1024));
             return;
         }
+
         int bytesWritten = clientSocket.write(writeBuffer);
         log.debug("Wrote {} bytes to {} (remaining: {})", bytesWritten, clientSocket.getRemoteAddress(), writeBuffer.remaining());
 
@@ -146,5 +172,4 @@ class EventLoop {
             key.attach(ByteBuffer.allocate(1024));
         }
     }
-
 }

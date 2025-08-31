@@ -13,24 +13,24 @@ import static commands.Errors.checkArgNumber;
 
 @Slf4j
 @AllArgsConstructor
-public class LrangeStrategy implements CommandStrategy {
+public class LLENStrategy implements CommandStrategy {
+
     private final KeyValueStore kvStore;
 
     @Override
     public ByteBuffer execute(List<String> args) {
-        var err = checkArgNumber(args, 3, 3);
+        var err = checkArgNumber(args, 1, 1);
         if (err != null) {
             return err;
         }
 
         var key = args.getFirst();
-        var start = Integer.parseInt(args.get(1));
-        var stop = Integer.parseInt(args.get(2));
 
-        var retrievedRange = kvStore.getRange(key, start, stop);
+        var list = (List<String>) kvStore.getValue(key);
+        var length = list != null ? list.size() : 0;
 
         return ByteBuffer.wrap(
-                ProtocolUtils.encode(retrievedRange).getBytes()
+                ProtocolUtils.encode(length).getBytes()
         );
     }
 }
