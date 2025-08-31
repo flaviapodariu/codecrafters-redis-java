@@ -10,7 +10,7 @@ public class ProtocolUtils {
     public static String LIST = "*";
 
     public static String NULL_STRING = "$-1\r\n";
-    public static String NULL_LIST = "*0\r\n";
+    public static String NULL_LIST = "*-1\r\n";
 
     public static String SIMPLE_ERROR = "-";
     public static String BULK_ERROR = "!";

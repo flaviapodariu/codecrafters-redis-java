@@ -30,7 +30,7 @@ public class BLPOPStrategy implements AsyncCommandStrategy {
         }
 
         var key = args.getFirst();
-        var timeout = (long) Double.parseDouble(args.get(1)) * 1000;
+        var timeout = (long) (Double.parseDouble(args.get(1)) * 1000);
 
         if (kvStore.containsKey(key) && !kvStore.getRange(key, 0, -1).isEmpty()) {
             var removedItem = kvStore.removeFirst(key);

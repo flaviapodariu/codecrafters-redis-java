@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 @Setter
@@ -18,9 +19,9 @@ public class CommandHandler implements BlockingClientManager {
     private Map<String, Object> strategies;
     private final AsyncCommandObserver asyncCommandObserver;
 
-    private final Map<String, List<SocketChannel>> waitingClients = new HashMap<>();
-    private final Map<SocketChannel, String> reverseLookupClient = new HashMap<>();
-    private final Map<SocketChannel, Instant> clientTimeouts = new HashMap<>();
+    private final Map<String, List<SocketChannel>> waitingClients = new ConcurrentHashMap<>();
+    private final Map<SocketChannel, String> reverseLookupClient = new ConcurrentHashMap<>();
+    private final Map<SocketChannel, Instant> clientTimeouts = new ConcurrentHashMap<>();
 
     public CommandHandler(KeyValueStore kvStore, AsyncCommandObserver observer) {
         this.strategies = new HashMap<>(Map.of(
@@ -49,10 +50,8 @@ public class CommandHandler implements BlockingClientManager {
             throw new IllegalArgumentException(String.format("Command %s does not exist", command));
         }
 
-        ByteBuffer response = null;
-
         if (strategy instanceof CommandStrategy syncCommand) {
-            response = syncCommand.execute(args.subList(1, args.size()));
+            var response = syncCommand.execute(args.subList(1, args.size()));
             asyncCommandObserver.onResponseReady(clientSocket, response);
         } else if (strategy instanceof AsyncCommandStrategy asyncCommand) {
             asyncCommand.executeAsync(args.subList(1, args.size()), clientSocket);
@@ -69,6 +68,7 @@ public class CommandHandler implements BlockingClientManager {
     public void registerBlockingClient(String key, SocketChannel channel, long timeout) {
         this.waitingClients.computeIfAbsent(key, x -> new LinkedList<>());
         this.waitingClients.get(key).add(channel);
+        this.reverseLookupClient.put(channel, key);
 
         if (timeout > 0) {
             var instantTimeout = Instant.now().plusMillis(timeout);
@@ -85,15 +85,17 @@ public class CommandHandler implements BlockingClientManager {
                 this.reverseLookupClient.remove(unblockedClient);
 
                 var pop = (LPOPStrategy) this.strategies.get("LPOP");
-                // should never be null since we are single threaded
+
                 var removedItem = pop.execute(key);
 
-                var response = Arrays.asList(key, removedItem);
-                sendResponse(
-                        unblockedClient,
-                        ByteBuffer.wrap(
-                                ProtocolUtils.encode(response).getBytes())
-                );
+                if (removedItem != null) {
+                    var response = Arrays.asList(key, removedItem);
+                    sendResponse(
+                            unblockedClient,
+                            ByteBuffer.wrap(
+                                    ProtocolUtils.encode(response).getBytes())
+                    );
+                }
             }
         }
 

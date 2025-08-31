@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static commands.ProtocolUtils.NULL_LIST;
 import static commands.ProtocolUtils.NULL_STRING;
 
 @Slf4j
@@ -72,7 +73,8 @@ class EventLoop implements AsyncCommandObserver {
      */
     public void run() throws IOException {
         while (true) {
-            selector.select();
+            var t = nextWakeUpMillis();
+            selector.select(t);
 
             checkClientTimeouts();
 
@@ -94,6 +96,14 @@ class EventLoop implements AsyncCommandObserver {
                 }
             }
         }
+    }
+
+    private long nextWakeUpMillis() {
+        var minTimeout = this.executor.getClientTimeouts().values()
+                .stream().mapToLong(t -> t.toEpochMilli() - Instant.now().toEpochMilli())
+                .min()
+                .orElse(0L);
+        return Math.max(minTimeout, 0L);
     }
 
     public void handleRead(SelectionKey key) throws IOException {
@@ -131,8 +141,8 @@ class EventLoop implements AsyncCommandObserver {
                 var waitingForKey = this.executor.getReverseLookupClient().get(client);
 
                 if (t.isBefore(Instant.now())) {
-                    onResponseReady(client, ByteBuffer.wrap(NULL_STRING.getBytes()));
                     this.executor.unblockClient(waitingForKey);
+                    onResponseReady(client, ByteBuffer.wrap(NULL_LIST.getBytes()));
                 }
             });
         }
