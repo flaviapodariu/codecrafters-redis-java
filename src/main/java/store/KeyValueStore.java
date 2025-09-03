@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import store.expiry.Expiry;
 import store.expiry.NoExpiry;
 
-import java.nio.channels.SocketChannel;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,31 +12,41 @@ import java.util.concurrent.ConcurrentHashMap;
 @AllArgsConstructor
 public class KeyValueStore {
 
-    private final Map<String, Object> simpleKeyValueStore = new ConcurrentHashMap<>();
-    private final Map<String, Instant> keysAdditionTimestamps = new ConcurrentHashMap<>();
-    private final Map<String, Expiry> keysExpiry = new ConcurrentHashMap<>();
+    private final Map<String, ValueObject> keyValueStore = new ConcurrentHashMap<>();
 
 
-    public Object getValue(String key) {
+    public ValueObject getValueObject(String key) {
         if (!containsKey(key)) {
             return null;
         }
 
-        var additionInstant = this.keysAdditionTimestamps.get(key);
-        var expiry = this.keysExpiry.getOrDefault(key, new NoExpiry());
+        var additionInstant = this.keyValueStore.get(key).getAdditionTime();
+        var expiry = this.keyValueStore.get(key).getExpiryTime();
 
         if (expiry.isExpired(additionInstant)) {
             removeKey(key);
             return null;
         }
 
-        return this.simpleKeyValueStore.get(key);
+        return this.keyValueStore.get(key);
     }
 
-    public void addValue(String key, Object value, Expiry expiry) {
-        this.simpleKeyValueStore.put(key, value);
-        this.keysAdditionTimestamps.put(key, Instant.now());
-        this.keysExpiry.put(key, expiry);
+    public void setValue(String key, Object value, Expiry expiry) {
+        var valueBuilder = ValueObject.builder()
+                .value(value)
+                .additionTime(Instant.now())
+                .expiryTime(expiry);
+        switch (value) {
+            case null -> {}
+            case String ignored -> {
+                valueBuilder.type(DataType.STRING);
+            }
+            case List<?> ignored -> {
+                valueBuilder.type(DataType.LIST);
+            }
+            default -> {}
+        }
+        this.keyValueStore.put(key, valueBuilder.build());
     }
 
     /**
@@ -48,36 +57,33 @@ public class KeyValueStore {
      * @return the number of elements in the list
      */
     public int append(String key, List<String> values) {
-        var listObject = this.simpleKeyValueStore.get(key);
+        var valueType = this.keyValueStore.get(key);
         List<String> list;
 
-        if (listObject != null) {
-//            assuming list<string> for now
-//            TODO ugly af
-            list = (ArrayList<String>) listObject;
+        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+
+            list = valueType.getValue();
             list.addAll(values);
         } else {
             list = new ArrayList<>(values);
-            addValue(key, list, new NoExpiry());
+            setValue(key, list, new NoExpiry());
         }
 
         return list.size();
     }
 
     public int prepend(String key, List<String> values) {
-        var listObject = this.simpleKeyValueStore.get(key);
+        var valueType = this.keyValueStore.get(key);
         List<String> list;
 
-        if (listObject != null) {
-//            assuming list<string> for now
-//            TODO ugly af
-            list = (ArrayList<String>) listObject;
+        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+            list = valueType.getValue();
             for (var item: values) {
                 list.addFirst(item);
             }
         } else {
             list = new ArrayList<>(values.reversed());
-            addValue(key, list, new NoExpiry());
+            setValue(key, list, new NoExpiry());
         }
         return list.size();
     }
@@ -94,17 +100,25 @@ public class KeyValueStore {
             return Collections.emptyList();
         }
 
-        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
+        var valueType = this.keyValueStore.get(key);
+        List<String> list;
 
-        start = convertNegativeIndex(start,  list.size());
-        stop = convertNegativeIndex(stop,  list.size());
+        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+            list = valueType.getValue();
+            start = convertNegativeIndex(start,  list.size());
+            stop = convertNegativeIndex(stop,  list.size());
 
-        if (start >= list.size() || start > stop) {
-            return Collections.emptyList();
+            if (start >= list.size() || start > stop) {
+                return Collections.emptyList();
+            }
+            if (stop >= list.size()) {
+                stop = list.size() - 1;
+            }
+        } else {
+            //  TODO should i throw something?
+            list = Collections.emptyList();
         }
-        if (stop >= list.size()) {
-            stop = list.size() - 1;
-        }
+
 
         return list.subList(start, stop+1);
     }
@@ -119,34 +133,40 @@ public class KeyValueStore {
             return null;
         }
 
-        var list = (ArrayList<String>) this.simpleKeyValueStore.get(key);
+        var valueType = this.keyValueStore.get(key);
+        List<String> list;
+        var removedItems = new ArrayList<String>();
 
-        if (list.isEmpty()) {
+        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+
+            list = valueType.getValue();
+            if (list.isEmpty()) {
+                return null;
+            }
+
+            if (n > list.size()) {
+                return list;
+            }
+
+            for (int i = 0; i < n; i++) {
+                removedItems.add(list.removeFirst());
+            }
+        } else {
+            //  TODO should i throw something?
             return null;
         }
 
-        if (n > list.size()) {
-            return list;
-        }
-
-        var removedItems = new ArrayList<String>();
-
-        for (int i = 0; i < n; i++) {
-            removedItems.add(list.removeFirst());
-        }
 
         return removedItems;
     }
 
     public boolean containsKey(String key) {
-        return this.simpleKeyValueStore.containsKey(key);
+        return this.keyValueStore.containsKey(key);
     }
 
 
     private void removeKey(String key) {
-        this.simpleKeyValueStore.remove(key);
-        this.keysAdditionTimestamps.remove(key);
-        this.keysExpiry.remove(key);
+        this.keyValueStore.remove(key);
     }
 
     private Integer convertNegativeIndex(int index, int listSize) {

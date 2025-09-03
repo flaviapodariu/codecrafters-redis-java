@@ -7,6 +7,8 @@ import java.util.List;
 
 @Slf4j
 public class Errors {
+    public static final String WRONG_TYPE = "WRONGTYPE Operation against a key holding the wrong kind of value";
+
     private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 
 

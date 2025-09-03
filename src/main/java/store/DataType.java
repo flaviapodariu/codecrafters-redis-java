@@ -1,0 +1,22 @@
+package store;
+
+public enum DataType {
+    STRING("string"),
+    LIST("list"),
+    SET("set"),
+    ZSET("zset"),
+    STREAM("stream"),
+    HASH("hash");
+
+    private final String typeName;
+
+    DataType(String typeName) {
+        this.typeName = typeName;
+    }
+
+    @Override
+    public String toString() {
+        return this.typeName;
+    }
+}
+

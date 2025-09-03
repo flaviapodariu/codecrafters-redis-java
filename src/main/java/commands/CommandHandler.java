@@ -32,30 +32,32 @@ public class CommandHandler implements BlockingClientManager {
                 "SET", new SETStrategy(kvStore),
                 "LRANGE", new LRANGEStrategy(kvStore),
                 "LLEN", new LLENStrategy(kvStore),
-                "LPOP", new LPOPStrategy(kvStore)
+                "LPOP", new LPOPStrategy(kvStore),
+                "TYPE", new TYPEStrategy(kvStore)
         ));
 
         strategies.put("BLPOP", new BLPOPStrategy(kvStore, this));
         strategies.put("RPUSH", new RPUSHStrategy(kvStore, this));
         strategies.put("LPUSH", new LPUSHStrategy(kvStore, this));
         this.asyncCommandObserver = observer;
-
     }
 
     public void execute(List<String> args, SocketChannel clientSocket) {
         var command = args.getFirst().toUpperCase();
 
         var strategy = strategies.getOrDefault(command, null);
-        if (strategy == null) {
-            throw new IllegalArgumentException(String.format("Command %s does not exist", command));
+        switch (strategy) {
+            case null -> throw new IllegalArgumentException(String.format("Command %s does not exist", command));
+            case CommandStrategy syncCommand -> {
+                var response = syncCommand.execute(args.subList(1, args.size()));
+                asyncCommandObserver.onResponseReady(clientSocket, response);
+            }
+            case AsyncCommandStrategy asyncCommand ->
+                    asyncCommand.executeAsync(args.subList(1, args.size()), clientSocket);
+            default -> {
+            }
         }
 
-        if (strategy instanceof CommandStrategy syncCommand) {
-            var response = syncCommand.execute(args.subList(1, args.size()));
-            asyncCommandObserver.onResponseReady(clientSocket, response);
-        } else if (strategy instanceof AsyncCommandStrategy asyncCommand) {
-            asyncCommand.executeAsync(args.subList(1, args.size()), clientSocket);
-        }
     }
 
     /**

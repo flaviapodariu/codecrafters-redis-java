@@ -98,14 +98,6 @@ class EventLoop implements AsyncCommandObserver {
         }
     }
 
-    private long nextWakeUpMillis() {
-        var minTimeout = this.executor.getClientTimeouts().values()
-                .stream().mapToLong(t -> t.toEpochMilli() - Instant.now().toEpochMilli())
-                .min()
-                .orElse(0L);
-        return Math.max(minTimeout, 0L);
-    }
-
     public void handleRead(SelectionKey key) throws IOException {
         SocketChannel clientSocket = (SocketChannel) key.channel();
         clientSocket.configureBlocking(false);
@@ -182,4 +174,20 @@ class EventLoop implements AsyncCommandObserver {
             key.attach(ByteBuffer.allocate(1024));
         }
     }
+
+    /**
+     * When there are no operations left in the event loop's queue
+     * and there are clients waiting in the list, they will never be released,
+     * even after their timeouts expire, because the server will be idling.
+     * This forces the selector to wake up when a client is due to be released.
+     * @return a value in milliseconds
+     */
+    private long nextWakeUpMillis() {
+        var minTimeout = this.executor.getClientTimeouts().values()
+                .stream().mapToLong(t -> t.toEpochMilli() - Instant.now().toEpochMilli())
+                .min()
+                .orElse(0L);
+        return Math.max(minTimeout, 0L);
+    }
+
 }

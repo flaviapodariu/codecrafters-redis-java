@@ -107,7 +107,7 @@ public class SETStrategy implements CommandStrategy {
         expiry = expiry != null ? expiry : new NoExpiry();
 
         try {
-            kvStore.addValue(key, value, expiry);
+            kvStore.setValue(key, value, expiry);
         } catch (Exception e) {
             String msg = String.format("Could not save the key-value pair %s-%s", key, value);
             log.error(msg);

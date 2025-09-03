@@ -2,18 +2,16 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
-import store.DataType;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static commands.Errors.WRONG_TYPE;
 import static commands.Errors.checkArgNumber;
-import static commands.ProtocolUtils.*;
+import static commands.ProtocolUtils.encode;
 
 @AllArgsConstructor
-public class GETStrategy implements CommandStrategy {
+public class TYPEStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
 
@@ -26,21 +24,18 @@ public class GETStrategy implements CommandStrategy {
         }
 
         var key = args.getFirst();
-        var valueObject = kvStore.getValueObject(key);
+
+        var valueObject = this.kvStore.getValueObject(key);
 
         if (valueObject == null) {
-            return ByteBuffer.wrap(NULL_STRING.getBytes());
+            return ByteBuffer.wrap(
+                    encode("none").getBytes()
+            );
         }
 
-        var value = valueObject.getValue();
         var type = valueObject.getType();
-
-        if (!type.equals(DataType.STRING)){
-            return ByteBuffer.wrap(encodeBulkError(WRONG_TYPE).getBytes());
-        }
-
         return ByteBuffer.wrap(
-                encode(String.valueOf(value)).getBytes()
+                encode(type.toString()).getBytes()
         );
     }
 }
