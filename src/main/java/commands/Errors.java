@@ -8,6 +8,8 @@ import java.util.List;
 @Slf4j
 public class Errors {
     public static final String WRONG_TYPE = "WRONGTYPE Operation against a key holding the wrong kind of value";
+    public static final String STREAM_ID_LOWER = "ERR The ID specified in XADD is equal or smaller than the target stream top item";
+    public static final String STREAM_ID_NOT_ALLOWED = "ERR The ID specified in XADD must be greater than 0-0";
 
     private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 

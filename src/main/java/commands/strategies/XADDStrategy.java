@@ -8,11 +8,9 @@ import store.KeyValueStore;
 import store.types.StreamObject;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static commands.Errors.checkArgNumber;
+import static commands.Errors.*;
 
 @Slf4j
 @AllArgsConstructor
@@ -31,17 +29,20 @@ public class XADDStrategy implements CommandStrategy {
 
         if (streamId.equals("*")) {
             streamId = generateKey();
+        } else {
+            err = validateId(streamKey, streamId);
+            if ( err != null) {
+                return err;
+            }
         }
+        var entryKey = args.get(2);
+        var entryValue = args.get(3);
 
-        var streamObject = new StreamObject(new ArrayList<>());
-        // TODO kinda buggy, values not existing is not checked
-        for (int i = 2; i < args.size() - 1; i += 2) {
-            var key = args.get(i);
-            streamObject.getValue().add(Map.of(streamKey, key));
-        }
+        var streamValue = new StreamObject.StreamValue(streamId, entryKey, entryValue);
+
 
         try {
-            kvStore.addStreamValue(streamKey, streamObject);
+            kvStore.addStreamValue(streamKey, streamValue);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return ByteBuffer.wrap(
@@ -59,4 +60,56 @@ public class XADDStrategy implements CommandStrategy {
         // TODO
         return "";
     }
+
+    private ByteBuffer validateId(String key, String streamId) {
+        if (streamId.equals("0-0")) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(STREAM_ID_NOT_ALLOWED).getBytes()
+            );
+        }
+
+        var streamObject = this.kvStore.getRedisObject(key);
+        if (streamObject == null) { return null; }
+
+        var stream = (StreamObject) streamObject.getValue();
+
+        var lastEntry = stream.getLast(key);
+        if (lastEntry == null) {
+            return null;
+        }
+        var lastEntrySplitId = lastEntry.getId().split("-");
+        var lastIdTimestamp = Long.parseLong(lastEntrySplitId[0]);
+        var lastIdSequence = Long.parseLong(lastEntrySplitId[1]);
+
+        var splitId = streamId.split("-");
+        var idTimestamp = Long.parseLong(splitId[0]);
+        var idSequence = Long.parseLong(splitId[1]);
+
+        if (lastIdTimestamp < idTimestamp || (lastIdTimestamp == idTimestamp) && (lastIdSequence <= idSequence) ) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(STREAM_ID_LOWER).getBytes()
+            );
+        }
+
+        return null;
+    }
 }
+
+//        // TODO kinda buggy, values not existing is not checked
+//        for (int i = 2; i < args.size() - 2; i += 3) {
+//            var streamId = args.get(i);
+//            var key = args.get(i+1);
+//            var value = args.get(i+2);
+//
+//            if (streamId.equals("*")) {
+//                streamId = generateKey();
+//            } else {
+//                err = validateId(streamId);
+//                if ( err != null) {
+//                    return err;
+//                }
+//            }
+//
+//            var streamValue = new StreamObject.StreamValue(streamId, key, value);
+//            streamValues.add(streamValue);
+//        }

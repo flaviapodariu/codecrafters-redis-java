@@ -28,7 +28,7 @@ public class LLENStrategy implements CommandStrategy {
 
         var key = args.getFirst();
 
-        var valueObject = kvStore.getValueObject(key);
+        var valueObject = kvStore.getRedisObject(key);
 
         if (valueObject == null) {
             return ByteBuffer.wrap(encode(0).getBytes());

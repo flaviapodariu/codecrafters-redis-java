@@ -13,7 +13,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Builder
-public class ValueObject {
+public class RedisObject {
    private Object value;
    private DataType type;
    private Instant additionTime;

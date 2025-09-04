@@ -7,17 +7,19 @@ import store.types.DataType;
 import store.types.StreamObject;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 @AllArgsConstructor
 public class KeyValueStore {
 
-    private final Map<String, ValueObject> keyValueStore = new ConcurrentHashMap<>();
+    private final Map<String, RedisObject> keyValueStore = new ConcurrentHashMap<>();
 
-
-    public ValueObject getValueObject(String key) {
+    public RedisObject getRedisObject(String key) {
         if (!containsKey(key)) {
             return null;
         }
@@ -37,7 +39,7 @@ public class KeyValueStore {
     }
 
     public void setValue(String key, Object value, Expiry expiry) {
-        var valueBuilder = ValueObject.builder()
+        var valueBuilder = RedisObject.builder()
                 .value(value)
                 .additionTime(Instant.now())
                 .expiryType(expiry);
@@ -171,17 +173,15 @@ public class KeyValueStore {
         return this.keyValueStore.containsKey(key);
     }
 
-    // TODO do i want void here?
-    public void addStreamValue(String key, StreamObject newStreamValues) {
-        var streamValueObject = this.keyValueStore.get(key);
-        if (streamValueObject == null) {
-            setValue(key, newStreamValues);
-        } else {
-            var streamObject = (StreamObject) streamValueObject.getValue();
-            streamObject.getValue().addAll(newStreamValues.getValue());
+    public void addStreamValue(String key, StreamObject.StreamValue streamValue) {
+        if (!containsKey(key)) {
+            setValue(key, List.of(streamValue));
+            return;
         }
-    }
 
+        var stream = (StreamObject) this.keyValueStore.get(key).getValue();
+        stream.addStreamEntry(key, streamValue);
+    }
 
     private void removeKey(String key) {
         this.keyValueStore.remove(key);

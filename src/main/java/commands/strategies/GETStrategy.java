@@ -26,7 +26,7 @@ public class GETStrategy implements CommandStrategy {
         }
 
         var key = args.getFirst();
-        var valueObject = kvStore.getValueObject(key);
+        var valueObject = kvStore.getRedisObject(key);
 
         if (valueObject == null) {
             return ByteBuffer.wrap(NULL_STRING.getBytes());

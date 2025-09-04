@@ -25,7 +25,7 @@ public class TYPEStrategy implements CommandStrategy {
 
         var key = args.getFirst();
 
-        var valueObject = this.kvStore.getValueObject(key);
+        var valueObject = this.kvStore.getRedisObject(key);
 
         if (valueObject == null) {
             return ByteBuffer.wrap(
