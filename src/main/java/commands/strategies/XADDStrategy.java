@@ -46,7 +46,7 @@ public class XADDStrategy implements CommandStrategy {
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return ByteBuffer.wrap(
-                    ProtocolUtils.encodeBulkError("Could not add stream").getBytes()
+                    ProtocolUtils.encodeSimpleError("Could not add stream").getBytes()
             );
         }
 
@@ -73,7 +73,7 @@ public class XADDStrategy implements CommandStrategy {
 
         var stream = (StreamObject) streamObject.getValue();
 
-        var lastEntry = stream.getLast(key);
+        var lastEntry = stream.getLast();
         if (lastEntry == null) {
             return null;
         }
@@ -85,7 +85,7 @@ public class XADDStrategy implements CommandStrategy {
         var idTimestamp = Long.parseLong(splitId[0]);
         var idSequence = Long.parseLong(splitId[1]);
 
-        if (lastIdTimestamp < idTimestamp || (lastIdTimestamp == idTimestamp) && (lastIdSequence <= idSequence) ) {
+        if (idTimestamp < lastIdTimestamp || ((idTimestamp == lastIdTimestamp) && (idSequence <= lastIdSequence)) ) {
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(STREAM_ID_LOWER).getBytes()
             );

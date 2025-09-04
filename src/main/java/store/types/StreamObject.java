@@ -15,20 +15,25 @@ import java.util.Map;
 public class StreamObject
 {
     // for now we'll have stream key -> simple string key
-    private Map<String, List<StreamValue>> value;
+    private List<StreamValue> value;
 
-    public void addStreamEntry(String key, StreamValue streamValue) {
-        this.value.getOrDefault(key, new LinkedList<>()).add(streamValue);
+    public void addStreamEntry(StreamValue streamValue) {
+        if (this.value.isEmpty()) {
+            this.value = new LinkedList<>();
+        }
+        this.value.add(streamValue);
     }
 
-    public void addStreamEntries(String key, List<StreamValue> streamValues) {
-        this.value.getOrDefault(key, new LinkedList<>()).addAll(streamValues);
+    public void addStreamEntries(List<StreamValue> streamValues) {
+        if (this.value.isEmpty()) {
+            this.value = new LinkedList<>();
+        }
+        this.value.addAll(streamValues);
     }
 
-    public StreamValue getLast(String key) {
-        var streamEntries = this.value.getOrDefault(key, new LinkedList<>());
-        if (!streamEntries.isEmpty()) {
-            return streamEntries.getLast();
+    public StreamValue getLast() {
+        if (!this.value.isEmpty()) {
+            return this.value.getLast();
         }
         return null;
     }

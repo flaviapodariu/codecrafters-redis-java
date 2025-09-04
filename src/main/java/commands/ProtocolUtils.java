@@ -13,6 +13,7 @@ public class ProtocolUtils {
     public static String NULL_LIST = "*-1\r\n";
 
     public static String SIMPLE_ERROR = "-";
+    // TODO might be wrong
     public static String BULK_ERROR = "!";
 
     public static String OK = "+OK\r\n";

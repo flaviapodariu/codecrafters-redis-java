@@ -7,10 +7,7 @@ import store.types.DataType;
 import store.types.StreamObject;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
@@ -173,14 +170,17 @@ public class KeyValueStore {
         return this.keyValueStore.containsKey(key);
     }
 
+    // TODO ugly
     public void addStreamValue(String key, StreamObject.StreamValue streamValue) {
         if (!containsKey(key)) {
-            setValue(key, List.of(streamValue));
+            var streamList = new LinkedList<StreamObject.StreamValue>();
+            streamList.add(streamValue);
+            setValue(key, new StreamObject(streamList));
             return;
         }
 
         var stream = (StreamObject) this.keyValueStore.get(key).getValue();
-        stream.addStreamEntry(key, streamValue);
+        stream.addStreamEntry(streamValue);
     }
 
     private void removeKey(String key) {
