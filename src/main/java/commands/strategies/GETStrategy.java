@@ -2,7 +2,7 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
-import store.DataType;
+import store.types.DataType;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;

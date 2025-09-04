@@ -1,4 +1,4 @@
-package store;
+package store.types;
 
 public enum DataType {
     STRING("string"),

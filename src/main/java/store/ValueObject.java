@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import store.expiry.Expiry;
+import store.types.DataType;
+
 import java.time.Instant;
 
 @AllArgsConstructor
@@ -15,7 +17,7 @@ public class ValueObject {
    private Object value;
    private DataType type;
    private Instant additionTime;
-   private Expiry expiryTime;
+   private Expiry expiryType;
 
     /**
      * This is a generic method.
@@ -28,6 +30,6 @@ public class ValueObject {
     }
 
    public boolean isExpired() {
-       return false;
+       return this.expiryType.isExpired(this.additionTime);
    }
 }

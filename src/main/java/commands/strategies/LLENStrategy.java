@@ -3,7 +3,7 @@ package commands.strategies;
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import store.DataType;
+import store.types.DataType;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;

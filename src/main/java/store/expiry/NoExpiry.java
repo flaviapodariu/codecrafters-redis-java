@@ -2,7 +2,7 @@ package store.expiry;
 
 import java.time.Instant;
 
-public class    NoExpiry implements Expiry {
+public class NoExpiry implements Expiry {
     @Override
     public boolean isExpired(Instant addedAt) {
         return false;

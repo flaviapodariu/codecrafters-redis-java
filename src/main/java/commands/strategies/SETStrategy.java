@@ -4,11 +4,10 @@ import commands.CommandStrategy;
 import commands.ProtocolUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import store.*;
+import store.KeyValueStore;
 import store.expiry.Expiry;
 import store.expiry.NoExpiry;
 import store.expiry.TTLExpiry;
-import store.expiry.UNIXExpiry;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -67,7 +66,7 @@ public class SETStrategy implements CommandStrategy {
                     } else {
                         ttl = Long.parseLong(args.get(curr+1));
                     }
-                    expiry = new TTLExpiry(ttl);
+                    expiry = new TTLExpiry(Instant.now().plusMillis(ttl));
                     curr += 2;
                     break;
                 case "EXAT":
@@ -85,7 +84,7 @@ public class SETStrategy implements CommandStrategy {
                     } else {
                         ttl = Long.parseLong(args.get(curr+1));
                     }
-                    expiry = new UNIXExpiry(Instant.ofEpochMilli(ttl));
+                    expiry = new TTLExpiry(Instant.ofEpochMilli(ttl));
                     curr += 2;
                     break;
                 case "NX":

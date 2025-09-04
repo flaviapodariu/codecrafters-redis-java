@@ -3,6 +3,8 @@ package store;
 import lombok.AllArgsConstructor;
 import store.expiry.Expiry;
 import store.expiry.NoExpiry;
+import store.types.DataType;
+import store.types.StreamObject;
 
 import java.time.Instant;
 import java.util.*;
@@ -20,10 +22,9 @@ public class KeyValueStore {
             return null;
         }
 
-        var additionInstant = this.keyValueStore.get(key).getAdditionTime();
-        var expiry = this.keyValueStore.get(key).getExpiryTime();
+        var valueObject = this.keyValueStore.get(key);
 
-        if (expiry.isExpired(additionInstant)) {
+        if (valueObject.isExpired()) {
             removeKey(key);
             return null;
         }
@@ -31,18 +32,24 @@ public class KeyValueStore {
         return this.keyValueStore.get(key);
     }
 
+    public void setValue(String key, Object value) {
+        setValue(key, value, new NoExpiry());
+    }
+
     public void setValue(String key, Object value, Expiry expiry) {
         var valueBuilder = ValueObject.builder()
                 .value(value)
                 .additionTime(Instant.now())
-                .expiryTime(expiry);
+                .expiryType(expiry);
         switch (value) {
-            case null -> {}
             case String ignored -> {
                 valueBuilder.type(DataType.STRING);
             }
             case List<?> ignored -> {
                 valueBuilder.type(DataType.LIST);
+            }
+            case StreamObject ignored -> {
+                valueBuilder.type(DataType.STREAM);
             }
             default -> {}
         }
@@ -162,6 +169,17 @@ public class KeyValueStore {
 
     public boolean containsKey(String key) {
         return this.keyValueStore.containsKey(key);
+    }
+
+    // TODO do i want void here?
+    public void addStreamValue(String key, StreamObject newStreamValues) {
+        var streamValueObject = this.keyValueStore.get(key);
+        if (streamValueObject == null) {
+            setValue(key, newStreamValues);
+        } else {
+            var streamObject = (StreamObject) streamValueObject.getValue();
+            streamObject.getValue().addAll(newStreamValues.getValue());
+        }
     }
 
 

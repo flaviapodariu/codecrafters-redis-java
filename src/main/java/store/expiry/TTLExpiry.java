@@ -7,15 +7,15 @@ import java.time.Instant;
 @AllArgsConstructor
 public class TTLExpiry implements Expiry {
 
-    private final Long ttlMillis;
+    private final Instant expiresAt;
 
     @Override
     public boolean isExpired(Instant addedAt) {
-        return addedAt.plusMillis(ttlMillis).isBefore(Instant.now());
+        return Instant.now().isAfter(this.expiresAt);
     }
 
     @Override
     public Instant getExpiryInstant(Instant addedAt) {
-        return addedAt.plusMillis(ttlMillis);
+        return this.expiresAt;
     }
 }
