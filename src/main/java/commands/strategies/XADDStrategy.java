@@ -30,6 +30,11 @@ public class XADDStrategy implements CommandStrategy {
         var streamId = args.get(1);
 
         var utils = new StreamIdUtils(kvStore);
+
+        if (streamId.equals("*")) {
+            streamId = utils.generateFullId();
+        }
+
         var illegalStructure = utils.checkIllegalStructure(streamId);
         if (illegalStructure != null) {
             return illegalStructure;

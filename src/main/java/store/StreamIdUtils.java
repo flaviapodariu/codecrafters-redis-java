@@ -6,6 +6,7 @@ import lombok.Getter;
 import store.types.StreamObject;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 import static commands.Errors.*;
 
@@ -13,7 +14,6 @@ import static commands.Errors.*;
 @Getter
 public class StreamIdUtils {
     private final KeyValueStore kvStore;
-
 
     public String formatId(String streamId, String streamKey) {
         var streamObject = this.kvStore.getRedisObject(streamKey);
@@ -78,6 +78,10 @@ public class StreamIdUtils {
         }
 
         return null;
+    }
+
+    public String generateFullId() {
+        return Instant.now().toEpochMilli() + "-" + "*";
     }
 
     private String handleSequenceWildcard(String streamId) {
