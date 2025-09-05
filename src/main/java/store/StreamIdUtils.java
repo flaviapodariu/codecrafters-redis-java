@@ -1,0 +1,114 @@
+package store;
+
+import commands.ProtocolUtils;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import store.types.StreamObject;
+
+import java.nio.ByteBuffer;
+
+import static commands.Errors.*;
+
+@AllArgsConstructor
+@Getter
+public class StreamIdUtils {
+    private final KeyValueStore kvStore;
+
+
+    public String formatId(String streamId, String streamKey) {
+        var streamObject = this.kvStore.getRedisObject(streamKey);
+        if (streamObject == null) {
+            return handleSequenceWildcard(streamId);
+        }
+
+        var stream = (StreamObject) streamObject.getValue();
+
+        // this should only happen in blocking operations
+        var lastEntry = stream.getLast();
+        if (lastEntry == null) {
+            return handleSequenceWildcard(streamId);
+        }
+
+        var lastSeq = lastEntry.getId();
+        return handleSequenceWildcard(streamId, lastSeq);
+    }
+
+
+    public ByteBuffer checkIllegalStructure(String streamId) {
+        if (streamId.equals("0-0")) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(STREAM_ID_NOT_ALLOWED).getBytes()
+            );
+        }
+
+        if (!streamId.matches("^(\\d+)-(\\d+|\\*)$")) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(INVALID_STREAM_ID).getBytes()
+            );
+        }
+        return null;
+    }
+
+    public ByteBuffer getTimestampErrors(String streamKey, String streamId) {
+        var streamObject = this.kvStore.getRedisObject(streamKey);
+        if (streamObject == null) {
+            return null;
+        }
+
+        var stream = (StreamObject) streamObject.getValue();
+
+        // this should only happen in blocking operations
+        var lastEntry = stream.getLast();
+        if (lastEntry == null) {
+            return null;
+        }
+
+        var lastEntrySplitId = lastEntry.getId().split("-");
+        var lastIdTimestamp = Long.parseLong(lastEntrySplitId[0]);
+        var lastIdSequence = Long.parseLong(lastEntrySplitId[1]);
+
+        var splitId = streamId.split("-");
+        var idTimestamp = Long.parseLong(splitId[0]);
+        long idSequence = Long.parseLong(splitId[1]);
+
+        if (idTimestamp < lastIdTimestamp || ((idTimestamp == lastIdTimestamp) && (idSequence <= lastIdSequence)) ) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(STREAM_ID_LOWER).getBytes()
+            );
+        }
+
+        return null;
+    }
+
+    private String handleSequenceWildcard(String streamId) {
+        return handleSequenceWildcard(streamId, null);
+    }
+
+    private String handleSequenceWildcard(String streamId, String lastId) {
+        var splitId = streamId.split("-");
+        var timestamp = splitId[0];
+        var seq = splitId[1];
+
+        if (lastId == null) {
+            if (seq.equals("*")) {
+                seq = timestamp.equals("0") ? "1" : "0";
+            }
+            return streamId.replace("*", seq);
+        }
+
+        var splitLastId = lastId.split("-");
+        var lastTimestamp = splitLastId[0];
+        var lastSeq = splitLastId[1];
+
+        if (seq.equals("*") && lastTimestamp.equals(timestamp)) {
+            var last = Long.parseLong(lastSeq);
+            seq = String.valueOf(last + 1);
+            return streamId.replace("*", seq);
+        } else if (!lastTimestamp.equals(timestamp)) {
+            return streamId.replace("*", "0");
+        }
+
+        return streamId;
+    }
+}
+
