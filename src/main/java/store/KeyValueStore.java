@@ -9,6 +9,7 @@ import store.types.StreamObject;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 
 @AllArgsConstructor
@@ -171,16 +172,39 @@ public class KeyValueStore {
     }
 
     // TODO ugly
-    public void addStreamValue(String key, StreamObject.StreamValue streamValue) {
+    public void addStreamValue(String key, String streamId, Map<String, String> item) {
         if (!containsKey(key)) {
-            var streamList = new LinkedList<StreamObject.StreamValue>();
-            streamList.add(streamValue);
-            setValue(key, new StreamObject(streamList));
+            var stream = new StreamObject();
+            stream.addStreamEntry(streamId, item);
+            setValue(key, stream);
             return;
         }
 
         var stream = (StreamObject) this.keyValueStore.get(key).getValue();
-        stream.addStreamEntry(streamValue);
+        stream.addStreamEntry(streamId, item);
+    }
+
+    public SortedMap<String, Map<String, String>> getStreamRange(String key, String start, String end) {
+        if (!containsKey(key)) {
+            return new TreeMap<>();
+        }
+
+        var streamObject = (StreamObject) this.keyValueStore.get(key).getValue();
+        var allStreams = streamObject.getValue();
+
+        var startKey = allStreams.ceilingKey(start);
+        var endKey = allStreams.ceilingKey(end);
+
+        if (startKey == null) {
+            return new TreeMap<>();
+        }
+
+        if (endKey == null) {
+            endKey = allStreams.lastKey();
+            return allStreams.subMap(startKey,true, endKey, true);
+        }
+        return allStreams.subMap(startKey,true, endKey, false);
+
     }
 
     private void removeKey(String key) {

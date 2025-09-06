@@ -11,6 +11,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Map.entry;
+
 @Getter
 @Setter
 public class CommandHandler implements BlockingClientManager {
@@ -24,17 +26,18 @@ public class CommandHandler implements BlockingClientManager {
     private final Map<SocketChannel, Instant> clientTimeouts = new ConcurrentHashMap<>();
 
     public CommandHandler(KeyValueStore kvStore, AsyncCommandObserver observer) {
-        this.strategies = new HashMap<>(Map.of(
-                "COMMAND", new DOCSStrategy(),
-                "PING", new PINGStrategy(),
-                "ECHO", new ECHOStrategy(),
-                "GET", new GETStrategy(kvStore),
-                "SET", new SETStrategy(kvStore),
-                "LRANGE", new LRANGEStrategy(kvStore),
-                "LLEN", new LLENStrategy(kvStore),
-                "LPOP", new LPOPStrategy(kvStore),
-                "TYPE", new TYPEStrategy(kvStore),
-                "XADD", new XADDStrategy(kvStore)
+        this.strategies = new HashMap<>(Map.ofEntries(
+                entry("COMMAND", new DOCSStrategy()),
+                entry("PING", new PINGStrategy()),
+                entry("ECHO", new ECHOStrategy()),
+                entry("GET", new GETStrategy(kvStore)),
+                entry("SET", new SETStrategy(kvStore)),
+                entry("LRANGE", new LRANGEStrategy(kvStore)),
+                entry("LLEN", new LLENStrategy(kvStore)),
+                entry("LPOP", new LPOPStrategy(kvStore)),
+                entry("TYPE", new TYPEStrategy(kvStore)),
+                entry("XADD", new XADDStrategy(kvStore)),
+                entry("XRANGE", new XRANGEStrategy(kvStore))
         ));
 
         strategies.put("BLPOP", new BLPOPStrategy(kvStore, this));

@@ -9,7 +9,9 @@ import store.StreamIdUtils;
 import store.types.StreamObject;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static commands.Errors.*;
 
@@ -47,13 +49,15 @@ public class XADDStrategy implements CommandStrategy {
             return timestampError;
         }
 
-        var entryKey = args.get(2);
-        var entryValue = args.get(3);
-
-        var streamValue = new StreamObject.StreamValue(streamId, entryKey, entryValue);
+        var item = new HashMap<String, String>();
+        for (int i = 2; i < args.size()-1; i += 2) {
+            var entryKey = args.get(i);
+            var entryValue = args.get(i+1);
+            item.put(entryKey, entryValue);
+        }
 
         try {
-            kvStore.addStreamValue(streamKey, streamValue);
+            kvStore.addStreamValue(streamKey, streamId, item);
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return ByteBuffer.wrap(

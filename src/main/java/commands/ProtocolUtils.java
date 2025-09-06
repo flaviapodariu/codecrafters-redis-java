@@ -1,6 +1,11 @@
 package commands;
 
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ProtocolUtils {
     public static String TERMINATOR = "\r\n";
@@ -53,6 +58,29 @@ public class ProtocolUtils {
     }
 
 
+    public static String encodeStream(SortedMap<String, Map<String, String>> stream) {
+        if (stream.isEmpty()) {
+            return NULL_LIST;
+        }
+
+        var sb = new StringBuilder();
+        sb.append(LIST).append(stream.size()).append(TERMINATOR);
+        stream.forEach( (id, entry) -> {
+            // always an id and a stream entry => 2 items
+            sb.append(LIST).append(2).append(TERMINATOR);
+
+            sb.append(bulkEncode(id, BULK_STRING));
+
+            var entryList = entry.entrySet().stream()
+                    .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
+                    .toList();
+            sb.append(encode(entryList));
+        });
+
+        return sb.toString();
+    }
+
+
     public static String encodeSimpleError(String message) {
         return simpleEncode(message, SIMPLE_ERROR);
     }
@@ -74,3 +102,15 @@ public class ProtocolUtils {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+

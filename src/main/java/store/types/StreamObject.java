@@ -1,50 +1,37 @@
 package store.types;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Getter
 @Setter
 @AllArgsConstructor
 public class StreamObject
 {
-    // for now we'll have stream key -> simple string key
-    private List<StreamValue> value;
+    private TreeMap<String, Map<String, String>> value;
 
-    public void addStreamEntry(StreamValue streamValue) {
-        if (this.value.isEmpty()) {
-            this.value = new LinkedList<>();
-        }
-        this.value.add(streamValue);
+    public StreamObject() {
+        this.value = new TreeMap<>();
     }
 
-    public void addStreamEntries(List<StreamValue> streamValues) {
+    public void addStreamEntry(String streamId, Map<String, String> itemValue) {
+
         if (this.value.isEmpty()) {
-            this.value = new LinkedList<>();
+            this.value = new TreeMap<>();
+            this.value.put(streamId, itemValue);
         }
-        this.value.addAll(streamValues);
+
+        this.value.put(streamId, itemValue);
     }
 
-    public StreamValue getLast() {
+    public String getLast() {
         if (!this.value.isEmpty()) {
-            return this.value.getLast();
+            return this.value.lastKey();
         }
         return null;
-    }
-
-    @EqualsAndHashCode
-    @AllArgsConstructor
-    @Getter
-    @Setter
-    public static class StreamValue {
-        private String id;
-        private String key;
-        private String value;
     }
 }

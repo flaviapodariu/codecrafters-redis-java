@@ -24,13 +24,12 @@ public class StreamIdUtils {
         var stream = (StreamObject) streamObject.getValue();
 
         // this should only happen in blocking operations
-        var lastEntry = stream.getLast();
-        if (lastEntry == null) {
+        var lastId = stream.getLast();
+        if (lastId == null) {
             return handleSequenceWildcard(streamId);
         }
 
-        var lastSeq = lastEntry.getId();
-        return handleSequenceWildcard(streamId, lastSeq);
+        return handleSequenceWildcard(streamId, lastId);
     }
 
 
@@ -49,6 +48,15 @@ public class StreamIdUtils {
         return null;
     }
 
+    public ByteBuffer checkRangeIllegalStructure(String rangeLimit) {
+        if (!rangeLimit.matches("^(\\d+)-(\\d+)|(\\d+)$")) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(INVALID_STREAM_ID).getBytes()
+            );
+        }
+        return null;
+    }
+
     public ByteBuffer getTimestampErrors(String streamKey, String streamId) {
         var streamObject = this.kvStore.getRedisObject(streamKey);
         if (streamObject == null) {
@@ -58,12 +66,12 @@ public class StreamIdUtils {
         var stream = (StreamObject) streamObject.getValue();
 
         // this should only happen in blocking operations
-        var lastEntry = stream.getLast();
-        if (lastEntry == null) {
+        var lastId = stream.getLast();
+        if (lastId == null) {
             return null;
         }
 
-        var lastEntrySplitId = lastEntry.getId().split("-");
+        var lastEntrySplitId = lastId.split("-");
         var lastIdTimestamp = Long.parseLong(lastEntrySplitId[0]);
         var lastIdSequence = Long.parseLong(lastEntrySplitId[1]);
 
@@ -82,6 +90,18 @@ public class StreamIdUtils {
 
     public String generateFullId() {
         return Instant.now().toEpochMilli() + "-" + "*";
+    }
+
+    public String getExclusiveEndLimit(String end) {
+        if (!end.contains("-")) {
+            var endTime = Long.parseLong(end) + 1;
+            end = String.valueOf(endTime);
+            return end + "-0";
+        } else {
+            var splitEnd = end.split("-");
+            var endSeq = Long.parseLong(splitEnd[1]) + 1;
+            return splitEnd[0] + "-" + endSeq;
+        }
     }
 
     private String handleSequenceWildcard(String streamId) {
