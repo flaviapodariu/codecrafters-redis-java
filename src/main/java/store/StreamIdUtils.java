@@ -57,6 +57,15 @@ public class StreamIdUtils {
         return null;
     }
 
+    public ByteBuffer checkSimpleId(String id) {
+        if (!id.matches("^(\\d+)-(\\d+)|(\\d+)$")) {
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(INVALID_STREAM_ID).getBytes()
+            );
+        }
+        return null;
+    }
+
     public ByteBuffer getTimestampErrors(String streamKey, String streamId) {
         var streamObject = this.kvStore.getRedisObject(streamKey);
         if (streamObject == null) {
@@ -106,14 +115,19 @@ public class StreamIdUtils {
         if (end.equals("+")) {
             return end;
         }
-        if (!end.contains("-")) {
-            var endTime = Long.parseLong(end) + 1;
-            end = String.valueOf(endTime);
-            return end + "-0";
+        return getNextId(end);
+    }
+
+    public String getNextId(String id) {
+        String next;
+        if (!id.contains("-")) {
+            var time = Long.parseLong(id) + 1;
+            next = String.valueOf(time);
+            return next + "-0";
         } else {
-            var splitEnd = end.split("-");
-            var endSeq = Long.parseLong(splitEnd[1]) + 1;
-            return splitEnd[0] + "-" + endSeq;
+            var splitId = id.split("-");
+            var seq = Long.parseLong(splitId[1]) + 1;
+            return splitId[0] + "-" + seq;
         }
     }
 

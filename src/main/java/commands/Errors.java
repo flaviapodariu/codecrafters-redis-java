@@ -11,8 +11,10 @@ public class Errors {
     public static final String STREAM_ID_LOWER = "ERR The ID specified in XADD is equal or smaller than the target stream top item";
     public static final String STREAM_ID_NOT_ALLOWED = "ERR The ID specified in XADD must be greater than 0-0";
     public static final String INVALID_STREAM_ID = "Invalid stream ID specified as stream command argument";
-    private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
+    public static final String COMMAND_FAIL = "Command could not be executed.";
+    public static final String UNBALANCED_XREAD = "ERR Unbalanced 'xread' list of streams: for each stream key an ID, '+', or '$' must be specified.";
 
+    private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs) {
         return checkArgNumber(args, minArgs, Integer.MAX_VALUE);

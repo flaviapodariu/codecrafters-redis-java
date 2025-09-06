@@ -3,8 +3,6 @@ package commands;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ProtocolUtils {
@@ -58,6 +56,15 @@ public class ProtocolUtils {
     }
 
 
+    /**
+     * Method used for encoding streams.
+     * The response is a list a streams, where each stream is represented by a list.
+     * This list contains:
+     *      1. stream id as string type
+     *      2. a list containing the stream's values ( ["key", "value"] )
+     * @param stream the stream to encode
+     * @return a string holding the encoded response
+     */
     public static String encodeStream(SortedMap<String, Map<String, String>> stream) {
         if (stream.isEmpty()) {
             return NULL_LIST;
@@ -75,6 +82,32 @@ public class ProtocolUtils {
                     .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
                     .toList();
             sb.append(encode(entryList));
+        });
+
+        return sb.toString();
+    }
+
+    /**
+     * Method used for encoding expected response for the XREAD operation.
+     * The response is a list containing lists. These lists contain:
+     *      1. redis object key as string type
+     *      2. a list of streams
+     *
+     * @param streamCollection a structure mapping each redis object key to its streams
+     * @return a string holding the encoded response
+     */
+    public static String encodeStreamList(Map<String, SortedMap<String, Map<String, String>>> streamCollection) {
+        if (streamCollection.isEmpty()) {
+            return NULL_LIST;
+        }
+
+        var sb = new StringBuilder();
+        sb.append(LIST).append(streamCollection.size()).append(TERMINATOR);
+        streamCollection.forEach( (key, stream) -> {
+            sb.append(LIST).append(2).append(TERMINATOR);
+            sb.append(bulkEncode(key, BULK_STRING));
+
+            sb.append(encodeStream(stream));
         });
 
         return sb.toString();

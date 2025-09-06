@@ -10,6 +10,7 @@ import store.StreamIdUtils;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static commands.Errors.COMMAND_FAIL;
 import static commands.Errors.checkArgNumber;
 
 @Slf4j
@@ -49,9 +50,9 @@ public class XRANGEStrategy implements CommandStrategy {
                     ProtocolUtils.encodeStream(streamRange).getBytes()
             );
         } catch (Exception e) {
-            log.error("todo");
+            log.error(COMMAND_FAIL);
             return ByteBuffer.wrap(
-                    ProtocolUtils.encodeSimpleError("TODO").getBytes()
+                    ProtocolUtils.encodeSimpleError(COMMAND_FAIL).getBytes()
             );
         }
     }

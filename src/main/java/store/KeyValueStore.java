@@ -9,7 +9,6 @@ import store.types.StreamObject;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 
 @AllArgsConstructor
@@ -208,6 +207,29 @@ public class KeyValueStore {
         }
         return allStreams.subMap(startKey,true, endKey, false);
 
+    }
+
+    /**
+     * Used with the XREAD command to retrieve a selection of streams
+     * @param keys the key containing the queried streams
+     * @param ids the exclusive start range for filtering
+     * @param count ??
+     * @return a mapping between a redis object key and its stream selection
+     */
+    public Map<String, SortedMap<String, Map<String, String>>> selectStreams(List<String> keys, List<String> ids, int count) {
+        var selection = new HashMap<String, SortedMap<String, Map<String, String>>>();
+
+        for(int i = 0; i < keys.size(); i++) {
+            var key = keys.get(i);
+            var id = ids.get(i);
+            if (!this.keyValueStore.containsKey(key)) {
+                continue;
+            }
+
+            var selectedKeyStreams = getStreamRange(key, id, "+");
+            selection.put(key, selectedKeyStreams);
+        }
+        return selection;
     }
 
     private void removeKey(String key) {
