@@ -49,7 +49,7 @@ public class StreamIdUtils {
     }
 
     public ByteBuffer checkRangeIllegalStructure(String rangeLimit) {
-        if (!rangeLimit.matches("^(\\d+)-(\\d+)|(\\d+)$")) {
+        if (!rangeLimit.matches("^(\\d+)-(\\d+)|(\\d+)|-|\\+$")) {
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(INVALID_STREAM_ID).getBytes()
             );
@@ -92,7 +92,20 @@ public class StreamIdUtils {
         return Instant.now().toEpochMilli() + "-" + "*";
     }
 
+    public String getFormattedStartLimit(String start) {
+        if (start.equals("-")) {
+            return "0-1";
+        }
+
+        if (!start.contains("-")) {
+            return start + "-0";
+        } else return start;
+    }
+
     public String getExclusiveEndLimit(String end) {
+        if (end.equals("+")) {
+            return end;
+        }
         if (!end.contains("-")) {
             var endTime = Long.parseLong(end) + 1;
             end = String.valueOf(endTime);

@@ -193,12 +193,15 @@ public class KeyValueStore {
         var allStreams = streamObject.getValue();
 
         var startKey = allStreams.ceilingKey(start);
-        var endKey = allStreams.ceilingKey(end);
 
         if (startKey == null) {
             return new TreeMap<>();
         }
+        if (end.equals("+")) {
+            return allStreams.tailMap(startKey);
+        }
 
+        var endKey = allStreams.ceilingKey(end);
         if (endKey == null) {
             endKey = allStreams.lastKey();
             return allStreams.subMap(startKey,true, endKey, true);

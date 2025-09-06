@@ -40,11 +40,7 @@ public class XRANGEStrategy implements CommandStrategy {
         if (formatError != null) {
             return formatError;
         }
-
-        if (!start.contains("-")) {
-            start = start + "-0";
-        }
-
+        start = utils.getFormattedStartLimit(start);
         end = utils.getExclusiveEndLimit(end);
 
         try {
