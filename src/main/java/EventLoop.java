@@ -1,5 +1,7 @@
-import commands.AsyncCommandObserver;
+import commands.Command;
+import commands.async.AsyncCommandObserver;
 import commands.CommandHandler;
+import commands.async.BlockedClient;
 import lombok.extern.slf4j.Slf4j;
 import parser.Parser;
 import store.KeyValueStore;
@@ -14,10 +16,11 @@ import java.nio.channels.SocketChannel;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static commands.ProtocolUtils.NULL_LIST;
-import static commands.ProtocolUtils.NULL_STRING;
 
 @Slf4j
 class EventLoop implements AsyncCommandObserver {
@@ -127,16 +130,22 @@ class EventLoop implements AsyncCommandObserver {
     }
 
     private void checkClientTimeouts() {
-        var timeouts = this.executor.getClientTimeouts();
-        if (!timeouts.isEmpty()) {
-            timeouts.forEach( (client, t) -> {
-                var waitingForKey = this.executor.getReverseLookupClient().get(client);
+        var waitingClients = this.executor.getWaitingClients();
+        if (!waitingClients.isEmpty()) {
 
-                if (t.isBefore(Instant.now())) {
-                    this.executor.unblockClient(waitingForKey);
-                    onResponseReady(client, ByteBuffer.wrap(NULL_LIST.getBytes()));
-                }
+            waitingClients.forEach( (waitingForKey, blockedClients) -> {
+                blockedClients.forEach( blockedClient -> {
+                    var t = blockedClient.getTimeout();
+                    var client = blockedClient.getChannel();
+                    var method = blockedClient.getMethod();
+
+                    if (t != null && t.isBefore(Instant.now())) {
+                        this.executor.unblockClient(waitingForKey, Command.NO_COMMAND, method);
+                        onResponseReady(client, ByteBuffer.wrap(NULL_LIST.getBytes()));
+                    }
+                });
             });
+
         }
     }
 
@@ -183,10 +192,15 @@ class EventLoop implements AsyncCommandObserver {
      * @return a value in milliseconds
      */
     private long nextWakeUpMillis() {
-        var minTimeout = this.executor.getClientTimeouts().values()
-                .stream().mapToLong(t -> t.toEpochMilli() - Instant.now().toEpochMilli())
+        var minTimeout = this.executor.getWaitingClients().values()
+                .stream()
+                .flatMap(List::stream)
+                .map(BlockedClient::getTimeout)
+                .filter(Objects::nonNull)
+                .mapToLong(t -> t.toEpochMilli() - Instant.now().toEpochMilli())
                 .min()
                 .orElse(0L);
+
         return Math.max(minTimeout, 0L);
     }
 

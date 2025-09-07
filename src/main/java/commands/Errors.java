@@ -13,6 +13,7 @@ public class Errors {
     public static final String INVALID_STREAM_ID = "Invalid stream ID specified as stream command argument";
     public static final String COMMAND_FAIL = "Command could not be executed.";
     public static final String UNBALANCED_XREAD = "ERR Unbalanced 'xread' list of streams: for each stream key an ID, '+', or '$' must be specified.";
+    public static final String TIMEOUT_INVALID = "ERR timeout is not an integer or out of range";
 
     private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 

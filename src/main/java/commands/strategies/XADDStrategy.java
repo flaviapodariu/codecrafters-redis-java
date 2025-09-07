@@ -1,25 +1,27 @@
 package commands.strategies;
 
+import commands.async.BlockingClientManager;
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
+import commands.async.UnblockingMethod;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
 import store.StreamIdUtils;
-import store.types.StreamObject;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import static commands.Errors.*;
+import static commands.Command.XREAD;
+import static commands.Errors.checkArgNumber;
 
 @Slf4j
 @AllArgsConstructor
 public class XADDStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
+    private final BlockingClientManager blockingClientManager;
 
     @Override
     public ByteBuffer execute(List<String> args) {
@@ -58,6 +60,9 @@ public class XADDStrategy implements CommandStrategy {
 
         try {
             kvStore.addStreamValue(streamKey, streamId, item);
+            item.forEach((key, _) ->
+                    blockingClientManager.unblockClient(streamKey, XREAD, UnblockingMethod.ALL)
+            );
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return ByteBuffer.wrap(

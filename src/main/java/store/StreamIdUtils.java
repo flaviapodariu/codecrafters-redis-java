@@ -119,11 +119,8 @@ public class StreamIdUtils {
     }
 
     public String getNextId(String id) {
-        String next;
         if (!id.contains("-")) {
-            var time = Long.parseLong(id) + 1;
-            next = String.valueOf(time);
-            return next + "-0";
+            return id + "-1";
         } else {
             var splitId = id.split("-");
             var seq = Long.parseLong(splitId[1]) + 1;

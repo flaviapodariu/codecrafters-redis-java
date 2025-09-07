@@ -1,8 +1,10 @@
 package commands.strategies;
 
-import commands.BlockingClientManager;
+import commands.Command;
+import commands.async.BlockingClientManager;
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
+import commands.async.UnblockingMethod;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -32,7 +34,7 @@ public class RPUSHStrategy implements CommandStrategy {
 
         try {
             var elements = kvStore.append(key, values);
-            this.blockingClientManager.unblockClient(key);
+            this.blockingClientManager.unblockClient(key, Command.LPOP, UnblockingMethod.FIFO);
             return ByteBuffer.wrap(
                     ProtocolUtils.encode(elements).getBytes()
             );

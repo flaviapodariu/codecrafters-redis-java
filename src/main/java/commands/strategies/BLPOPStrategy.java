@@ -1,14 +1,18 @@
 package commands.strategies;
 
-import commands.AsyncCommandStrategy;
-import commands.BlockingClientManager;
+import commands.Command;
+import commands.async.AsyncCommandStrategy;
+import commands.async.BlockedClient;
+import commands.async.BlockingClientManager;
 import commands.ProtocolUtils;
+import commands.async.UnblockingMethod;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,7 +46,17 @@ public class BLPOPStrategy implements AsyncCommandStrategy {
                             ProtocolUtils.encode(response).getBytes())
             );
         } else {
-            blockingClientManager.registerBlockingClient(key, client, timeout);
+            var blockedClient = BlockedClient.builder()
+                            .channel(client)
+                            .executedCommand(Command.BLPOP)
+                            .method(UnblockingMethod.FIFO)
+                            .keys(List.of(key));
+            if (timeout > 0) {
+                var instantTimeout = Instant.now().plusMillis(timeout);
+                blockedClient.timeout(instantTimeout);
+            }
+
+            blockingClientManager.registerBlockingClient(key, blockedClient.build());
         }
     }
 

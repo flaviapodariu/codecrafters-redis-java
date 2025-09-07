@@ -94,20 +94,24 @@ public class ProtocolUtils {
      *      2. a list of streams
      *
      * @param streamCollection a structure mapping each redis object key to its streams
+     * @param keys the key list as provided by the client to preserve the ordering in the response
      * @return a string holding the encoded response
      */
-    public static String encodeStreamList(Map<String, SortedMap<String, Map<String, String>>> streamCollection) {
+    public static String encodeStreamList(Map<String, SortedMap<String, Map<String, String>>> streamCollection,
+                                          List<String> keys) {
         if (streamCollection.isEmpty()) {
             return NULL_LIST;
         }
 
         var sb = new StringBuilder();
         sb.append(LIST).append(streamCollection.size()).append(TERMINATOR);
-        streamCollection.forEach( (key, stream) -> {
-            sb.append(LIST).append(2).append(TERMINATOR);
-            sb.append(bulkEncode(key, BULK_STRING));
+        keys.forEach( key -> {
+            if (streamCollection.containsKey(key)) {
+                sb.append(LIST).append(2).append(TERMINATOR);
+                sb.append(bulkEncode(key, BULK_STRING));
 
-            sb.append(encodeStream(stream));
+                sb.append(encodeStream(streamCollection.get(key)));
+            }
         });
 
         return sb.toString();

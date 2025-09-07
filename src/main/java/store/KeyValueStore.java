@@ -227,7 +227,9 @@ public class KeyValueStore {
             }
 
             var selectedKeyStreams = getStreamRange(key, id, "+");
-            selection.put(key, selectedKeyStreams);
+            if (!selectedKeyStreams.isEmpty()) {
+                selection.put(key, selectedKeyStreams);
+            }
         }
         return selection;
     }

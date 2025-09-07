@@ -1,4 +1,4 @@
-package commands;
+package commands.async;
 
 import java.nio.channels.SocketChannel;
 import java.util.List;
