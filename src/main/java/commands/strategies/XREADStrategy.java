@@ -109,18 +109,21 @@ public class XREADStrategy implements AsyncCommandStrategy {
             var streams = this.kvStore.selectStreams(keys, ids, count);
 
             if (shouldBlock && streams.isEmpty()) {
-                var instantTimeout = Instant.now().plusMillis(timeout);
                 var blockedClient = BlockedClient.builder()
                         .channel(client)
-                        .timeout(instantTimeout)
                         .executedCommand(Command.XREAD)
                         .method(UnblockingMethod.ALL)
                         .keys(keys)
-                        .ids(ids)
-                        .build();
+                        .ids(ids);
+
+                if (timeout > 0) {
+                    var instantTimeout = Instant.now().plusMillis(timeout);
+                    blockedClient.timeout(instantTimeout);
+                }
+
                 keys.forEach(k ->
                         blockingClientManager.registerBlockingClient(
-                                k, blockedClient)
+                                k, blockedClient.build())
                 );
                 return;
             }
