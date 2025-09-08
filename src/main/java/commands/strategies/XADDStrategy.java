@@ -62,7 +62,7 @@ public class XADDStrategy implements CommandStrategy {
         try {
             kvStore.addStreamValue(streamKey, streamId, item);
             String finalStreamId = streamId;
-            item.forEach((key, _) -> {
+            item.forEach((_, _) -> {
                         blockingClientManager.updateStreamIdForBlockedClient(streamKey, finalStreamId);
                         blockingClientManager.unblockClient(streamKey, XREAD, UnblockingMethod.ALL);
                     }

@@ -43,6 +43,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
         var keys = new ArrayList<String>();
         var ids = new ArrayList<String>();
         var firstIdSeen = false;
+        var waitForFuture = false;
         var count = 1;
 
         while(i < args.size()) {
@@ -59,6 +60,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
 
                 if (formatError != null) {
                     if (currArg.equals("$")) {
+                        waitForFuture = true;
                         ids.add(currArg);
                         i++;
 
@@ -113,6 +115,14 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     ));
         }
 
+        if (waitForFuture && ids.size() != 1) {
+            blockingClientManager.sendResponse(
+                    client,
+                    ByteBuffer.wrap(
+                            ProtocolUtils.encodeBulkError(WRONG_TYPE).getBytes()
+                    ));
+        }
+
         try {
             var streams = this.kvStore.selectStreams(keys, ids, count);
 
@@ -141,6 +151,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     ByteBuffer.wrap(
                             ProtocolUtils.encodeStreamList(streams, keys).getBytes()
                     ));
+
         } catch (Exception e) {
             log.error(COMMAND_FAIL);
             blockingClientManager.sendResponse(

@@ -73,7 +73,7 @@ public class CommandHandler implements BlockingClientManager {
      */
     @Override
     public void registerBlockingClient(String key, BlockedClient blockedClient) {
-        this.waitingClients.computeIfAbsent(key, x -> new LinkedList<>());
+        this.waitingClients.computeIfAbsent(key, _ -> new LinkedList<>());
         this.waitingClients.get(key).add(blockedClient);
     }
 
@@ -120,17 +120,13 @@ public class CommandHandler implements BlockingClientManager {
                 var readStream = (XREADStrategy) this.strategies.get(XREAD);
                 // todo implement count
                 ByteBuffer response;
-                if (client.getIds().getFirst().equals("$")) {
-                    response = readStream.execute(client.getKeys(), client.getIds(), 1);
-                }else {
-                    response = readStream.execute(client.getKeys(), client.getIds(), 1);
-
-                }
+                response = readStream.execute(client.getKeys(), client.getIds(), 1);
                 sendResponse(channel, response);
             }
             case NO_COMMAND ->
                 sendResponse(
                         channel,
+                        // TODO what if other command want to return something else?
                         ByteBuffer.wrap(
                                 ProtocolUtils.encode(NULL_LIST).getBytes())
                         );
