@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static commands.Errors.*;
+import static store.StreamIdUtils.getNextId;
 
 @Slf4j
 @AllArgsConstructor
@@ -57,13 +58,20 @@ public class XREADStrategy implements AsyncCommandStrategy {
                 var formatError = utils.checkSimpleId(currArg);
 
                 if (formatError != null) {
+                    if (currArg.equals("$")) {
+                        ids.add(currArg);
+                        i++;
+
+                        firstIdSeen = true;
+                        continue;
+                    }
+
                     if (!firstIdSeen) {
                         keys.add(currArg);
-                    } else {
-                        blockingClientManager.sendResponse(client, formatError);
                     }
                 } else {
-                    ids.add(utils.getNextId(currArg));
+                    firstIdSeen = true;
+                    ids.add(getNextId(currArg));
                 }
             } else {
                 if (currArg.equalsIgnoreCase("COUNT")) {
@@ -94,7 +102,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     client,
                     ByteBuffer.wrap(
                             ProtocolUtils.encodeBulkError("stream option").getBytes()
-            ));
+                    ));
         }
 
         if (keys.size() != ids.size()) {
@@ -102,7 +110,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     client,
                     ByteBuffer.wrap(
                             ProtocolUtils.encodeBulkError(UNBALANCED_XREAD).getBytes()
-            ));
+                    ));
         }
 
         try {
@@ -132,7 +140,7 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     client,
                     ByteBuffer.wrap(
                             ProtocolUtils.encodeStreamList(streams, keys).getBytes()
-            ));
+                    ));
         } catch (Exception e) {
             log.error(COMMAND_FAIL);
             blockingClientManager.sendResponse(
@@ -152,9 +160,9 @@ public class XREADStrategy implements AsyncCommandStrategy {
             );
         } catch (Exception e) {
             return
-                ByteBuffer.wrap(
-                        ProtocolUtils.encodeBulkError(COMMAND_FAIL).getBytes()
-            );
+                    ByteBuffer.wrap(
+                            ProtocolUtils.encodeBulkError(COMMAND_FAIL).getBytes()
+                    );
         }
 
     }

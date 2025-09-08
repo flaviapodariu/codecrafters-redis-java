@@ -191,11 +191,14 @@ public class KeyValueStore {
         var streamObject = (StreamObject) this.keyValueStore.get(key).getValue();
         var allStreams = streamObject.getValue();
 
-        var startKey = allStreams.ceilingKey(start);
+        String startKey = start.equals("$") ?
+                StreamIdUtils.getNextId(allStreams.lastKey()) :
+                allStreams.ceilingKey(start);
 
         if (startKey == null) {
             return new TreeMap<>();
         }
+
         if (end.equals("+")) {
             return allStreams.tailMap(startKey);
         }
@@ -226,7 +229,9 @@ public class KeyValueStore {
                 continue;
             }
 
-            var selectedKeyStreams = getStreamRange(key, id, "+");
+            SortedMap<String, Map<String, String>> selectedKeyStreams;
+            selectedKeyStreams = getStreamRange(key, id, "+");
+
             if (!selectedKeyStreams.isEmpty()) {
                 selection.put(key, selectedKeyStreams);
             }

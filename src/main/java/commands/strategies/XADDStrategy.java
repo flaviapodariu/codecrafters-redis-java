@@ -15,6 +15,7 @@ import java.util.List;
 
 import static commands.Command.XREAD;
 import static commands.Errors.checkArgNumber;
+import static store.StreamIdUtils.checkIllegalStructure;
 
 @Slf4j
 @AllArgsConstructor
@@ -39,7 +40,7 @@ public class XADDStrategy implements CommandStrategy {
             streamId = utils.generateFullId();
         }
 
-        var illegalStructure = utils.checkIllegalStructure(streamId);
+        var illegalStructure = checkIllegalStructure(streamId);
         if (illegalStructure != null) {
             return illegalStructure;
         }
@@ -60,8 +61,15 @@ public class XADDStrategy implements CommandStrategy {
 
         try {
             kvStore.addStreamValue(streamKey, streamId, item);
-            item.forEach((key, _) ->
-                    blockingClientManager.unblockClient(streamKey, XREAD, UnblockingMethod.ALL)
+            String finalStreamId = streamId;
+            item.forEach((key, _) -> {
+                        blockingClientManager.updateStreamIdForBlockedClient(streamKey, finalStreamId);
+                        blockingClientManager.unblockClient(streamKey, XREAD, UnblockingMethod.ALL);
+                    }
+            );
+
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encode(streamId).getBytes()
             );
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -69,11 +77,6 @@ public class XADDStrategy implements CommandStrategy {
                     ProtocolUtils.encodeSimpleError("Could not add stream").getBytes()
             );
         }
-
-        return ByteBuffer.wrap(
-                ProtocolUtils.encode(streamId).getBytes()
-        );
-
     }
 
 }

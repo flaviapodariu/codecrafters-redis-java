@@ -86,7 +86,18 @@ public class CommandHandler implements BlockingClientManager {
                 executeUnblockingCommand(key, waitingFor, unblockedClient);
             }
         }
+    }
 
+    @Override
+    public void updateStreamIdForBlockedClient(String key, String lastStreamId) {
+        if (this.waitingClients.get(key) != null) {
+            var blockedClients = this.waitingClients.get(key);
+            blockedClients.forEach(client -> {
+                if (client.getIds().getFirst().equals("$")) {
+                    client.setIds(List.of(lastStreamId));
+                }
+            });
+        }
     }
 
     private void executeUnblockingCommand(String key, Command waitingFor, BlockedClient client) {
@@ -108,7 +119,13 @@ public class CommandHandler implements BlockingClientManager {
             case XREAD -> {
                 var readStream = (XREADStrategy) this.strategies.get(XREAD);
                 // todo implement count
-                var response = readStream.execute(client.getKeys(), client.getIds(), 1);
+                ByteBuffer response;
+                if (client.getIds().getFirst().equals("$")) {
+                    response = readStream.execute(client.getKeys(), client.getIds(), 1);
+                }else {
+                    response = readStream.execute(client.getKeys(), client.getIds(), 1);
+
+                }
                 sendResponse(channel, response);
             }
             case NO_COMMAND ->

@@ -33,7 +33,7 @@ public class StreamIdUtils {
     }
 
 
-    public ByteBuffer checkIllegalStructure(String streamId) {
+    public static ByteBuffer checkIllegalStructure(String streamId) {
         if (streamId.equals("0-0")) {
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(STREAM_ID_NOT_ALLOWED).getBytes()
@@ -118,7 +118,7 @@ public class StreamIdUtils {
         return getNextId(end);
     }
 
-    public String getNextId(String id) {
+    public static String getNextId(String id) {
         if (!id.contains("-")) {
             return id + "-1";
         } else {
