@@ -4,18 +4,20 @@ import commands.async.*;
 import commands.strategies.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static commands.Command.*;
 import static commands.ProtocolUtils.NULL_LIST;
+import static commands.ProtocolUtils.encodeSimpleError;
 import static java.util.Map.entry;
 
+@Slf4j
 @Getter
 @Setter
 public class CommandHandler implements BlockingClientManager {
@@ -33,6 +35,7 @@ public class CommandHandler implements BlockingClientManager {
                 entry(ECHO, new ECHOStrategy()),
                 entry(GET, new GETStrategy(kvStore)),
                 entry(SET, new SETStrategy(kvStore)),
+                entry(DEL, new DELStrategy(kvStore)),
                 entry(LRANGE, new LRANGEStrategy(kvStore)),
                 entry(LLEN, new LLENStrategy(kvStore)),
                 entry(LPOP, new LPOPStrategy(kvStore)),
@@ -53,7 +56,10 @@ public class CommandHandler implements BlockingClientManager {
 
         var strategy = strategies.getOrDefault(fromString(command), null);
         switch (strategy) {
-            case null -> throw new IllegalArgumentException(String.format("Command %s does not exist", command));
+            case null -> {
+                String error = String.format("Command %s does not exist", command);
+                asyncCommandObserver.onResponseReady(clientSocket, ByteBuffer.wrap(encodeSimpleError(error).getBytes()));
+            }
             case CommandStrategy syncCommand -> {
                 var response = syncCommand.execute(args.subList(1, args.size()));
                 asyncCommandObserver.onResponseReady(clientSocket, response);
@@ -79,7 +85,9 @@ public class CommandHandler implements BlockingClientManager {
 
     @Override
     public void unblockClient(String key, Command waitingFor, UnblockingMethod method) {
-        if (this.waitingClients.get(key) != null) {
+        var waitingClients = this.waitingClients.get(key);
+        if (waitingClients != null && !waitingClients.isEmpty()) {
+            log.debug("get client to unblock");
             var unblockedClient = this.waitingClients.get(key).removeFirst();
 
             if (unblockedClient != null) {
@@ -126,7 +134,7 @@ public class CommandHandler implements BlockingClientManager {
             case NO_COMMAND ->
                 sendResponse(
                         channel,
-                        // TODO what if other command want to return something else?
+                        // TODO what if other command wants to return something else?
                         ByteBuffer.wrap(
                                 ProtocolUtils.encode(NULL_LIST).getBytes())
                         );

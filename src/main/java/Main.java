@@ -1,7 +1,5 @@
-import commands.CommandHandler;
+import server.RedisServer;
 import lombok.extern.slf4j.Slf4j;
-import parser.Parser;
-import store.KeyValueStore;
 
 import java.io.IOException;
 
@@ -12,17 +10,12 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
         int port = 6379;
-        KeyValueStore kvStore = new KeyValueStore();
-        Parser parser = new Parser();
-
-        EventLoop eventLoop = new EventLoop(parser, kvStore);
+        var client = new RedisServer("0.0.0.0", port);
 
         try {
-            eventLoop.configure(port);
-            eventLoop.run();
+            client.run();
         } catch (IOException e) {
             log.error("Error during server processing: {}", e.getMessage(), e);
-            throw new RuntimeException(e);
         } catch (Exception e) {
             log.error("An unexpected error occurred: {}", e.getMessage(), e);
         }

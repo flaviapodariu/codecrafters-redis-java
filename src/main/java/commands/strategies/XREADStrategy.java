@@ -6,6 +6,7 @@ import commands.async.BlockedClient;
 import commands.async.BlockingClientManager;
 import commands.ProtocolUtils;
 import commands.async.UnblockingMethod;
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -29,6 +30,8 @@ public class XREADStrategy implements AsyncCommandStrategy {
 
     @Override
     public void executeAsync(List<String> args, SocketChannel client) {
+        log.debug("Xread args = {}", args);
+
         var err = checkArgNumber(args, 3);
         if (err != null) {
             blockingClientManager.sendResponse(client, err);
@@ -150,8 +153,12 @@ public class XREADStrategy implements AsyncCommandStrategy {
                     client,
                     ByteBuffer.wrap(
                             ProtocolUtils.encodeStreamList(streams, keys).getBytes()
-                    ));
-
+            ));
+        } catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            blockingClientManager.sendResponse(client, ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes())
+            );
         } catch (Exception e) {
             log.error(COMMAND_FAIL);
             blockingClientManager.sendResponse(
@@ -168,6 +175,11 @@ public class XREADStrategy implements AsyncCommandStrategy {
             var selectedStreams = this.kvStore.selectStreams(keys, ids, count);
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeStreamList(selectedStreams, keys).getBytes()
+            );
+        } catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
             );
         } catch (Exception e) {
             return

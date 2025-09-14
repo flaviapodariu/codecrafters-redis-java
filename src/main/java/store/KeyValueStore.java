@@ -1,6 +1,8 @@
 package store;
 
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import store.expiry.Expiry;
 import store.expiry.NoExpiry;
 import store.types.DataType;
@@ -9,8 +11,11 @@ import store.types.StreamObject;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static commands.Errors.WRONG_TYPE;
 
+@Slf4j
 @AllArgsConstructor
 public class KeyValueStore {
 
@@ -55,6 +60,18 @@ public class KeyValueStore {
         this.keyValueStore.put(key, valueBuilder.build());
     }
 
+    public int deleteKeys(List<String> keys) {
+        AtomicInteger removed = new AtomicInteger();
+        keys.forEach( k -> {
+            if (this.keyValueStore.get(k) != null) {
+                this.keyValueStore.remove(k);
+                removed.getAndIncrement();
+            }
+        });
+
+        return removed.get();
+    }
+
     /**
      * Method used with RPUSH command. Adds a value to an existing list at given key
      * or creates the list and adds the element there if the key does not exist
@@ -66,8 +83,11 @@ public class KeyValueStore {
         var valueType = this.keyValueStore.get(key);
         List<String> list;
 
-        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+        if (valueType != null && !valueType.getType().equals(DataType.LIST)) {
+            throw new CommandExecutionException(WRONG_TYPE);
+        }
 
+        if (valueType != null) {
             list = valueType.getValue();
             list.addAll(values);
         } else {
@@ -82,7 +102,11 @@ public class KeyValueStore {
         var valueType = this.keyValueStore.get(key);
         List<String> list;
 
-        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+        if (valueType != null && !valueType.getType().equals(DataType.LIST)) {
+            throw new CommandExecutionException(WRONG_TYPE);
+        }
+
+        if (valueType != null) {
             list = valueType.getValue();
             for (var item: values) {
                 list.addFirst(item);
@@ -109,7 +133,11 @@ public class KeyValueStore {
         var valueType = this.keyValueStore.get(key);
         List<String> list;
 
-        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+        if (valueType != null && !valueType.getType().equals(DataType.LIST)) {
+            throw new CommandExecutionException(WRONG_TYPE);
+        }
+
+        if (valueType != null) {
             list = valueType.getValue();
             start = convertNegativeIndex(start,  list.size());
             stop = convertNegativeIndex(stop,  list.size());
@@ -143,7 +171,11 @@ public class KeyValueStore {
         List<String> list;
         var removedItems = new ArrayList<String>();
 
-        if (valueType != null && valueType.getType().equals(DataType.LIST)) {
+        if (valueType != null && !valueType.getType().equals(DataType.LIST)) {
+            throw new CommandExecutionException(WRONG_TYPE);
+        }
+
+        if (valueType != null) {
 
             list = valueType.getValue();
             if (list.isEmpty()) {
@@ -221,7 +253,7 @@ public class KeyValueStore {
      */
     public Map<String, SortedMap<String, Map<String, String>>> selectStreams(List<String> keys, List<String> ids, int count) {
         var selection = new HashMap<String, SortedMap<String, Map<String, String>>>();
-
+        log.debug("selecting streams... with keys = {}", keys);
         for(int i = 0; i < keys.size(); i++) {
             var key = keys.get(i);
             var id = ids.get(i);
@@ -229,9 +261,11 @@ public class KeyValueStore {
                 continue;
             }
 
-            SortedMap<String, Map<String, String>> selectedKeyStreams;
-            selectedKeyStreams = getStreamRange(key, id, "+");
+            if (this.keyValueStore.get(key).getType() != DataType.STREAM) {
+                throw new CommandExecutionException(WRONG_TYPE);
+            }
 
+            var selectedKeyStreams = getStreamRange(key, id, "+");
             if (!selectedKeyStreams.isEmpty()) {
                 selection.put(key, selectedKeyStreams);
             }

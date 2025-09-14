@@ -6,6 +6,7 @@ import commands.async.BlockedClient;
 import commands.async.BlockingClientManager;
 import commands.ProtocolUtils;
 import commands.async.UnblockingMethod;
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -36,28 +37,41 @@ public class BLPOPStrategy implements AsyncCommandStrategy {
         var key = args.getFirst();
         var timeout = (long) (Double.parseDouble(args.get(1)) * 1000);
 
-        if (kvStore.containsKey(key) && !kvStore.getRange(key, 0, -1).isEmpty()) {
-            var removedItem = kvStore.removeFirst(key);
-            var response = Arrays.asList(key, removedItem);
+        try {
+            if (kvStore.containsKey(key) && !kvStore.getRange(key, 0, -1).isEmpty()) {
+                var removedItem = kvStore.removeFirst(key);
+                var response = Arrays.asList(key, removedItem);
 
-            blockingClientManager.sendResponse(
-                    client,
-                    ByteBuffer.wrap(
-                            ProtocolUtils.encode(response).getBytes())
-            );
-        } else {
-            var blockedClient = BlockedClient.builder()
-                            .channel(client)
-                            .executedCommand(Command.BLPOP)
-                            .method(UnblockingMethod.FIFO)
-                            .keys(List.of(key));
-            if (timeout > 0) {
-                var instantTimeout = Instant.now().plusMillis(timeout);
-                blockedClient.timeout(instantTimeout);
+                blockingClientManager.sendResponse(
+                        client,
+                        ByteBuffer.wrap(
+                                ProtocolUtils.encode(response).getBytes())
+                );
+            } else {
+                var blockedClient = BlockedClient.builder()
+                        .channel(client)
+                        .executedCommand(Command.BLPOP)
+                        .method(UnblockingMethod.FIFO)
+                        .keys(List.of(key));
+                if (timeout > 0) {
+                    var instantTimeout = Instant.now().plusMillis(timeout);
+                    blockedClient.timeout(instantTimeout);
+                }
+
+                blockingClientManager.registerBlockingClient(key, blockedClient.build());
             }
 
-            blockingClientManager.registerBlockingClient(key, blockedClient.build());
+        } catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            blockingClientManager.sendResponse(client, ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes())
+            );
+        } catch (Exception ex) {
+            var msg = String.format("Could not append to the list at key %s", key);
+            log.error(msg);
+            blockingClientManager.sendResponse(client, ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(msg).getBytes())
+            );
         }
     }
-
 }

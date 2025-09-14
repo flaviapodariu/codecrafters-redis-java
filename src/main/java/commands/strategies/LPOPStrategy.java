@@ -2,6 +2,7 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -30,23 +31,41 @@ public class LPOPStrategy implements CommandStrategy {
         if (args.size() == 2) {
             numItems = Integer.parseInt(args.get(1));
         }
-        var removedItems = kvStore.removeItems(key, numItems);
-        if (removedItems == null) {
-            return ByteBuffer.wrap(NULL_STRING.getBytes());
-        }
 
-        if (removedItems.size() == 1) {
+        try {
+            var removedItems = kvStore.removeItems(key, numItems);
+            if (removedItems == null) {
+                return ByteBuffer.wrap(NULL_STRING.getBytes());
+            }
+
+            if (removedItems.size() == 1) {
+                return ByteBuffer.wrap(
+                        ProtocolUtils.encode(removedItems.getFirst()).getBytes()
+                );
+            }
+
             return ByteBuffer.wrap(
-                ProtocolUtils.encode(removedItems.getFirst()).getBytes()
+                    ProtocolUtils.encode(removedItems).getBytes()
+            );
+        }  catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
+            );
+        } catch (Exception e) {
+            var msg = String.format("Could not remove from list at key %s", key);
+            log.error(msg);
+
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(msg).getBytes()
             );
         }
 
-        return ByteBuffer.wrap(
-                ProtocolUtils.encode(removedItems).getBytes()
-        );
+
     }
 
     public String execute(String key) {
+        log.debug("internal lpop execute");
         return this.kvStore.removeFirst(key);
     }
 }

@@ -15,7 +15,7 @@ public class Errors {
     public static final String UNBALANCED_XREAD = "ERR Unbalanced 'xread' list of streams: for each stream key an ID, '+', or '$' must be specified.";
     public static final String TIMEOUT_INVALID = "ERR timeout is not an integer or out of range";
     public static final String SYNTAX_ERROR = "ERR syntax error";
-    private static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
+    public static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs) {
         return checkArgNumber(args, minArgs, Integer.MAX_VALUE);

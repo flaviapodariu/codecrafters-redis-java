@@ -8,6 +8,7 @@ public enum Command {
     ECHO("echo"),
     GET("get"),
     SET("set"),
+    DEL("del"),
     LRANGE("lrange"),
     LLEN("llen"),
     LPOP("lpop"),

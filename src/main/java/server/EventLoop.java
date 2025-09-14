@@ -1,3 +1,5 @@
+package server;
+
 import commands.Command;
 import commands.async.AsyncCommandObserver;
 import commands.CommandHandler;
@@ -18,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static commands.ProtocolUtils.NULL_LIST;
 
@@ -56,12 +57,12 @@ class EventLoop implements AsyncCommandObserver {
      * @param port The port to bind the server to.
      *
      */
-    public void configure(int port) {
+    public void configure(String host, int port) {
         try {
             this.selector = Selector.open();
             this.serverSocketChannel = ServerSocketChannel.open();
             this.serverSocketChannel.configureBlocking(false);
-            this.serverSocketChannel.bind(new InetSocketAddress(port));
+            this.serverSocketChannel.bind(new InetSocketAddress(host, port));
             this.serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
             log.info("Server listening on port {} ...", port);
         } catch (IOException e) {

@@ -2,6 +2,7 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -49,7 +50,13 @@ public class XRANGEStrategy implements CommandStrategy {
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeStream(streamRange).getBytes()
             );
-        } catch (Exception e) {
+        } catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
+            );
+        }
+        catch (Exception e) {
             log.error(COMMAND_FAIL);
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(COMMAND_FAIL).getBytes()

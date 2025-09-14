@@ -2,8 +2,8 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
-import store.types.DataType;
 import store.KeyValueStore;
+import store.types.DataType;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -36,7 +36,7 @@ public class GETStrategy implements CommandStrategy {
         var type = valueObject.getType();
 
         if (!type.equals(DataType.STRING)){
-            return ByteBuffer.wrap(encodeBulkError(WRONG_TYPE).getBytes());
+            return ByteBuffer.wrap(encodeSimpleError(WRONG_TYPE).getBytes());
         }
 
         return ByteBuffer.wrap(

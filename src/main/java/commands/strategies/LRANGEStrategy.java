@@ -2,6 +2,7 @@ package commands.strategies;
 
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
+import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -9,6 +10,7 @@ import store.KeyValueStore;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static commands.Errors.WRONG_TYPE;
 import static commands.Errors.checkArgNumber;
 
 @Slf4j
@@ -27,10 +29,25 @@ public class LRANGEStrategy implements CommandStrategy {
         var start = Integer.parseInt(args.get(1));
         var stop = Integer.parseInt(args.get(2));
 
-        var retrievedRange = kvStore.getRange(key, start, stop);
+        try {
+            var retrievedRange = kvStore.getRange(key, start, stop);
 
-        return ByteBuffer.wrap(
-                ProtocolUtils.encode(retrievedRange).getBytes()
-        );
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encode(retrievedRange).getBytes()
+            );
+        }  catch (CommandExecutionException ex) {
+            log.error(ex.getMessage());
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
+            );
+        } catch (Exception e) {
+            var msg = String.format("Could not retrieve range of list at key %s", key);
+            log.error(msg);
+
+            return ByteBuffer.wrap(
+                    ProtocolUtils.encodeSimpleError(msg).getBytes()
+            );
+        }
+
     }
 }

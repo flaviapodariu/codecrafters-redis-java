@@ -3,15 +3,16 @@ package commands.strategies;
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import store.types.DataType;
 import store.KeyValueStore;
+import store.types.DataType;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
 import static commands.Errors.WRONG_TYPE;
 import static commands.Errors.checkArgNumber;
-import static commands.ProtocolUtils.*;
+import static commands.ProtocolUtils.encode;
+import static commands.ProtocolUtils.encodeSimpleError;
 
 @Slf4j
 @AllArgsConstructor
@@ -34,13 +35,13 @@ public class LLENStrategy implements CommandStrategy {
             return ByteBuffer.wrap(encode(0).getBytes());
         }
 
-        List<?> list = valueObject.getValue();
         var type = valueObject.getType();
 
         if (!type.equals(DataType.LIST)){
-            return ByteBuffer.wrap(encodeBulkError(WRONG_TYPE).getBytes());
+            return ByteBuffer.wrap(encodeSimpleError(WRONG_TYPE).getBytes());
         }
 
+        List<?> list = valueObject.getValue();
         var length = list != null ? list.size() : 0;
 
         return ByteBuffer.wrap(

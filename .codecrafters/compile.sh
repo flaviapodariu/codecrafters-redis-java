@@ -8,4 +8,5 @@
 
 set -e # Exit on failure
 
-mvn -q -B package -Ddir=/tmp/codecrafters-build-redis-java
+# no docker env on codecrafters server
+mvn -q -B package -Ddir=/tmp/codecrafters-build-redis-java -DskipTests
