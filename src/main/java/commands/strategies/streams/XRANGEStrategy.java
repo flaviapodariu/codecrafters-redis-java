@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.streams;
 
 import commands.CommandStrategy;
 import commands.ProtocolUtils;

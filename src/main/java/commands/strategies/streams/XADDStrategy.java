@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.streams;
 
 import commands.async.BlockingClientManager;
 import commands.CommandStrategy;

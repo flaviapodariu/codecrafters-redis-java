@@ -1,6 +1,7 @@
-package commands.strategies;
+package commands.strategies.lists;
 
 import commands.Command;
+import commands.CommandStrategy;
 import commands.async.AsyncCommandStrategy;
 import commands.async.BlockedClient;
 import commands.async.BlockingClientManager;
@@ -18,10 +19,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static commands.Errors.checkArgNumber;
+import static commands.ProtocolUtils.NULL_STRING;
 
 @Slf4j
 @AllArgsConstructor
-public class BLPOPStrategy implements AsyncCommandStrategy {
+public class BLPOPStrategy implements AsyncCommandStrategy, CommandStrategy {
 
     private final KeyValueStore kvStore;
     private final BlockingClientManager blockingClientManager;
@@ -73,5 +75,11 @@ public class BLPOPStrategy implements AsyncCommandStrategy {
                     ProtocolUtils.encodeSimpleError(msg).getBytes())
             );
         }
+    }
+
+    @Override
+    public ByteBuffer execute(List<String> args) {
+        // todo
+        return ByteBuffer.wrap(NULL_STRING.getBytes());
     }
 }

@@ -1,7 +1,19 @@
 package commands;
 
 import commands.async.*;
-import commands.strategies.*;
+import commands.strategies.lists.*;
+import commands.strategies.misc.*;
+import commands.strategies.streams.XADDStrategy;
+import commands.strategies.streams.XRANGEStrategy;
+import commands.strategies.streams.XREADStrategy;
+import commands.strategies.strings.GETStrategy;
+import commands.strategies.strings.INCRStrategy;
+import commands.strategies.strings.SETStrategy;
+import commands.strategies.transactional.EXECStrategy;
+import commands.strategies.transactional.MULTIStrategy;
+import commands.transaction.TransactionManager;
+import commands.transaction.TransactionalClientManager;
+import commands.transaction.TransactionalCommandStrategy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,20 +25,20 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static commands.Command.*;
-import static commands.ProtocolUtils.NULL_LIST;
-import static commands.ProtocolUtils.encodeSimpleError;
+import static commands.ProtocolUtils.*;
 import static java.util.Map.entry;
 
 @Slf4j
 @Getter
 @Setter
-public class CommandHandler implements BlockingClientManager {
+public class CommandHandler implements BlockingClientManager, TransactionManager {
 
     // todo strategies should be final. fix the blop issue when constructing the map
     private Map<Command, Object> strategies;
     private final AsyncCommandObserver asyncCommandObserver;
 
     private final Map<String, List<BlockedClient>> waitingClients = new ConcurrentHashMap<>();
+    private final TransactionalClientManager clientManager = new TransactionalClientManager();
 
     public CommandHandler(KeyValueStore kvStore, AsyncCommandObserver observer) {
         this.strategies = new HashMap<>(Map.ofEntries(
@@ -41,7 +53,8 @@ public class CommandHandler implements BlockingClientManager {
                 entry(LPOP, new LPOPStrategy(kvStore)),
                 entry(TYPE, new TYPEStrategy(kvStore)),
                 entry(XRANGE, new XRANGEStrategy(kvStore)),
-                entry(INCR, new INCRStrategy(kvStore))
+                entry(INCR, new INCRStrategy(kvStore)),
+                entry(MULTI, new MULTIStrategy(clientManager))
         ));
 
         strategies.put(BLPOP, new BLPOPStrategy(kvStore, this));
@@ -49,6 +62,7 @@ public class CommandHandler implements BlockingClientManager {
         strategies.put(LPUSH, new LPUSHStrategy(kvStore, this));
         strategies.put(XREAD, new XREADStrategy(kvStore, this));
         strategies.put(XADD, new XADDStrategy(kvStore, this));
+        strategies.put(EXEC, new EXECStrategy(clientManager, this));
         this.asyncCommandObserver = observer;
     }
 
@@ -67,11 +81,27 @@ public class CommandHandler implements BlockingClientManager {
             }
             case AsyncCommandStrategy asyncCommand ->
                     asyncCommand.executeAsync(args.subList(1, args.size()), clientSocket);
+            case TransactionalCommandStrategy transactionalCommand -> {
+                var response = transactionalCommand.execute(args.subList(1, args.size()), clientSocket);
+                asyncCommandObserver.onResponseReady(clientSocket, response);
+            }
             default -> {
             }
         }
-
     }
+
+    public ByteBuffer executeInTransaction(List<String> args) {
+        var command = args.getFirst().toUpperCase();
+
+        var strategy = strategies.getOrDefault(fromString(command), null);
+
+        if (strategy instanceof CommandStrategy syncCommand) {
+            return syncCommand.execute(args.subList(1, args.size()));
+        }
+        // todo what happens here?
+        return null;
+    }
+
 
     /**
      * Flags a client as waiting
@@ -146,5 +176,16 @@ public class CommandHandler implements BlockingClientManager {
     @Override
     public void sendResponse(SocketChannel channel, ByteBuffer response) {
         asyncCommandObserver.onResponseReady(channel, response);
+    }
+
+    @Override
+    public ByteBuffer onExecuteTransaction(List<List<String>> commandList, SocketChannel channel) {
+        var transactionResult = new ArrayList<ByteBuffer>();
+        commandList.forEach(command -> {
+                var commandResult = executeInTransaction(command);
+                transactionResult.add(commandResult);
+        });
+
+        return encodeTransaction(transactionResult);
     }
 }

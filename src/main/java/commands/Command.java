@@ -1,7 +1,5 @@
 package commands;
 
-import java.util.Optional;
-
 public enum Command {
     COMMAND("command"),
     PING("ping"),
@@ -20,6 +18,9 @@ public enum Command {
     XREAD("xread"),
     XADD("xadd"),
     INCR("incr"),
+    MULTI("multi"),
+    EXEC("exec"),
+    SUBSCRIBE("subscribe"),
     NO_COMMAND("no_command");
 
     private final String commandName;

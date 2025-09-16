@@ -1,22 +1,17 @@
-package commands.strategies;
+package commands.strategies.misc;
 
 import commands.CommandStrategy;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
-import store.types.DataType;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static commands.Errors.WRONG_TYPE;
 import static commands.Errors.checkArgNumber;
 import static commands.ProtocolUtils.encode;
-import static commands.ProtocolUtils.encodeSimpleError;
 
-@Slf4j
 @AllArgsConstructor
-public class LLENStrategy implements CommandStrategy {
+public class TYPEStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
 
@@ -29,23 +24,17 @@ public class LLENStrategy implements CommandStrategy {
 
         var key = args.getFirst();
 
-        var valueObject = kvStore.getRedisObject(key);
+        var valueObject = this.kvStore.getRedisObject(key);
 
         if (valueObject == null) {
-            return ByteBuffer.wrap(encode(0).getBytes());
+            return ByteBuffer.wrap(
+                    encode("none").getBytes()
+            );
         }
 
         var type = valueObject.getType();
-
-        if (!type.equals(DataType.LIST)){
-            return ByteBuffer.wrap(encodeSimpleError(WRONG_TYPE).getBytes());
-        }
-
-        List<?> list = valueObject.getValue();
-        var length = list != null ? list.size() : 0;
-
         return ByteBuffer.wrap(
-                encode(length).getBytes()
+                encode(type.toString()).getBytes()
         );
     }
 }

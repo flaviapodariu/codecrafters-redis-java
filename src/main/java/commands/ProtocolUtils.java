@@ -1,5 +1,8 @@
 package commands;
 
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -53,6 +56,16 @@ public class ProtocolUtils {
             sb.append(bulkEncode(item, BULK_STRING));
         }
         return sb.toString();
+    }
+
+    public static ByteBuffer encodeTransaction(List<ByteBuffer> results) {
+        var sb = new StringBuilder();
+        sb.append(LIST).append(results.size()).append(TERMINATOR);
+
+        results.forEach(result -> {
+            sb.append(new String(result.array(), StandardCharsets.UTF_8));
+        });
+        return ByteBuffer.wrap(sb.toString().getBytes());
     }
 
 

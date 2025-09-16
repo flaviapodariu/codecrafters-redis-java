@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.streams;
 
 import commands.Command;
 import commands.async.AsyncCommandStrategy;
@@ -30,7 +30,6 @@ public class XREADStrategy implements AsyncCommandStrategy {
 
     @Override
     public void executeAsync(List<String> args, SocketChannel client) {
-        log.debug("Xread args = {}", args);
 
         var err = checkArgNumber(args, 3);
         if (err != null) {

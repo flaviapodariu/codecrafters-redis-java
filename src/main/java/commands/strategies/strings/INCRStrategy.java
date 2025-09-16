@@ -1,10 +1,7 @@
-package commands.strategies;
+package commands.strategies.strings;
 
-import commands.Command;
 import commands.CommandStrategy;
 import commands.ProtocolUtils;
-import commands.async.BlockingClientManager;
-import commands.async.UnblockingMethod;
 import commands.exceptions.CommandExecutionException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,36 +12,33 @@ import java.util.List;
 
 import static commands.Errors.checkArgNumber;
 
-@Slf4j
 @AllArgsConstructor
-public class LPUSHStrategy implements CommandStrategy {
+@Slf4j
+public class INCRStrategy implements CommandStrategy {
 
     private final KeyValueStore kvStore;
-    private final BlockingClientManager blockingClientManager;
 
     @Override
     public ByteBuffer execute(List<String> args) {
-        var err = checkArgNumber(args, 2);
+        var err = checkArgNumber(args, 1, 1);
         if (err != null) {
             return err;
         }
 
         var key = args.getFirst();
-        List<String> values = args.subList(1, args.size());
 
         try {
-            var elements = kvStore.prepend(key, values);
-            this.blockingClientManager.unblockClient(key, Command.LPOP, UnblockingMethod.FIFO);
+            var updatedValue = this.kvStore.increment(key);
             return ByteBuffer.wrap(
-                    ProtocolUtils.encode(elements).getBytes()
+                    ProtocolUtils.encode(updatedValue).getBytes()
             );
-        } catch (CommandExecutionException ex) {
+        } catch(CommandExecutionException ex) {
             log.error(ex.getMessage());
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
             );
         } catch (Exception e) {
-            var msg = String.format("Could not append to the list at key %s", key);
+            var msg = String.format("Could not increment %s...", key);
             log.error(msg);
 
             return ByteBuffer.wrap(
