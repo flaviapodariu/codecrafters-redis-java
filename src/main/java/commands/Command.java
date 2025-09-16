@@ -19,6 +19,7 @@ public enum Command {
     LPUSH("lpush"),
     XREAD("xread"),
     XADD("xadd"),
+    INCR("incr"),
     NO_COMMAND("no_command");
 
     private final String commandName;

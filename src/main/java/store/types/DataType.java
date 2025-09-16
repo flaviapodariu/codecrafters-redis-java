@@ -2,6 +2,7 @@ package store.types;
 
 public enum DataType {
     STRING("string"),
+    INTEGER("integer"),
     LIST("list"),
     SET("set"),
     ZSET("zset"),

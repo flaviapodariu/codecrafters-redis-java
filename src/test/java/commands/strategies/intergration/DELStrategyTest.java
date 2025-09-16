@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.intergration;
 
 import commands.RedisTestContainer;
 import io.lettuce.core.XReadArgs;

@@ -12,41 +12,38 @@ import java.util.List;
 
 import static commands.Errors.checkArgNumber;
 
-@Slf4j
 @AllArgsConstructor
-public class LRANGEStrategy implements CommandStrategy {
+@Slf4j
+public class INCRStrategy implements CommandStrategy {
+
     private final KeyValueStore kvStore;
 
     @Override
     public ByteBuffer execute(List<String> args) {
-        var err = checkArgNumber(args, 3, 3);
+        var err = checkArgNumber(args, 1, 1);
         if (err != null) {
             return err;
         }
 
         var key = args.getFirst();
-        var start = Integer.parseInt(args.get(1));
-        var stop = Integer.parseInt(args.get(2));
 
         try {
-            var retrievedRange = kvStore.getRange(key, start, stop);
-
+            var updatedValue = this.kvStore.increment(key);
             return ByteBuffer.wrap(
-                    ProtocolUtils.encode(retrievedRange).getBytes()
+                    ProtocolUtils.encode(updatedValue).getBytes()
             );
-        }  catch (CommandExecutionException ex) {
+        } catch(CommandExecutionException ex) {
             log.error(ex.getMessage());
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(ex.getMessage()).getBytes()
             );
         } catch (Exception e) {
-            var msg = String.format("Could not retrieve range of list at key %s", key);
+            var msg = String.format("Could not increment %s...", key);
             log.error(msg);
 
             return ByteBuffer.wrap(
                     ProtocolUtils.encodeSimpleError(msg).getBytes()
             );
         }
-
     }
 }

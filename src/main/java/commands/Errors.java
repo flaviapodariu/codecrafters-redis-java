@@ -16,6 +16,7 @@ public class Errors {
     public static final String TIMEOUT_INVALID = "ERR timeout is not an integer or out of range";
     public static final String SYNTAX_ERROR = "ERR syntax error";
     public static final String INVALID_ARGS_NUMBER = "ERR wrong number of arguments for command";
+    public static final String NOT_AN_INTEGER = "value is not an integer or out of range";
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs) {
         return checkArgNumber(args, minArgs, Integer.MAX_VALUE);

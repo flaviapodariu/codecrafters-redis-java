@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static commands.Errors.NOT_AN_INTEGER;
 import static commands.Errors.WRONG_TYPE;
 
 @Slf4j
@@ -272,6 +273,47 @@ public class KeyValueStore {
         }
         return selection;
     }
+
+    public long increment(String key) {
+        var redisObject = this.keyValueStore.get(key);
+        if (redisObject != null && !redisObject.getType().equals(DataType.STRING)) {
+            throw new CommandExecutionException(WRONG_TYPE);
+        }
+
+        if (redisObject != null && isNumeric(redisObject.getValue())) {
+            var incremented = Long.parseLong(redisObject.getValue()) + 1;
+
+            if (incremented == Long.MAX_VALUE) {
+                throw new CommandExecutionException(NOT_AN_INTEGER);
+            }
+
+            redisObject.setValue(String.valueOf(incremented));
+            this.keyValueStore.put(key, redisObject);
+            return incremented;
+        }
+
+        if (redisObject == null) {
+            var incremented = "1";
+            var newObject = new RedisObject(incremented, DataType.STRING, Instant.now(), new NoExpiry());
+            this.keyValueStore.put(key, newObject);
+            return Long.parseLong(incremented);
+        }
+
+        throw new CommandExecutionException(NOT_AN_INTEGER);
+    }
+
+    private boolean isNumeric(String strNum) {
+        if (strNum == null) {
+            return false;
+        }
+        try {
+            Long.parseLong(strNum);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
+    }
+
 
     private void removeKey(String key) {
         this.keyValueStore.remove(key);

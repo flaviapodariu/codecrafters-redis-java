@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.intergration;
 
 import commands.RedisTestContainer;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -6,7 +6,6 @@ import io.lettuce.core.StreamMessage;
 import io.lettuce.core.XReadArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

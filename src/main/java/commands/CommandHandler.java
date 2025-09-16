@@ -40,7 +40,8 @@ public class CommandHandler implements BlockingClientManager {
                 entry(LLEN, new LLENStrategy(kvStore)),
                 entry(LPOP, new LPOPStrategy(kvStore)),
                 entry(TYPE, new TYPEStrategy(kvStore)),
-                entry(XRANGE, new XRANGEStrategy(kvStore))
+                entry(XRANGE, new XRANGEStrategy(kvStore)),
+                entry(INCR, new INCRStrategy(kvStore))
         ));
 
         strategies.put(BLPOP, new BLPOPStrategy(kvStore, this));

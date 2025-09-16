@@ -17,7 +17,6 @@ public class TYPEStrategy implements CommandStrategy {
 
     @Override
     public ByteBuffer execute(List<String> args) {
-
         var err = checkArgNumber(args, 1, 1);
         if (err != null) {
             return err;

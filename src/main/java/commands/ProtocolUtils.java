@@ -9,7 +9,7 @@ public class ProtocolUtils {
     public static String TERMINATOR = "\r\n";
 
     public static String BULK_STRING = "$";
-    public static String INTEGER = ":";
+    public static String NUMBER = ":";
     public static String LIST = "*";
 
     public static String NULL_STRING = "$-1\r\n";
@@ -37,8 +37,8 @@ public class ProtocolUtils {
      * @param number the argument to be encoded
      * @return the RESP encoded argument
      */
-    public static String encode(Integer number) {
-        return simpleEncode(number, INTEGER);
+    public static String encode(Number number) {
+        return simpleEncode(number, NUMBER);
     }
 
     /**

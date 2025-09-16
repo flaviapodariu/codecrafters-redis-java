@@ -1,4 +1,4 @@
-package commands.strategies;
+package commands.strategies.intergration;
 
 import commands.RedisTestContainer;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -12,7 +12,7 @@ import static commands.Errors.WRONG_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class RPUSHStrategyTest extends RedisTestContainer {
+public class LPUSHStrategyTest extends RedisTestContainer {
     private static RedisCommands<String, String> client;
 
     @BeforeEach
@@ -27,7 +27,7 @@ public class RPUSHStrategyTest extends RedisTestContainer {
         var value = "firstValue";
 
         // when
-        Long newLength = client.rpush(key, value);
+        Long newLength = client.lpush(key, value);
 
         // then
         assertEquals(1L, newLength);
@@ -37,32 +37,33 @@ public class RPUSHStrategyTest extends RedisTestContainer {
     @Test
     void shouldSucceedWithMultipleValues() {
         // given
-        var key = "multipleValues";
+        var key = "listKey";
         var value1 = "value1";
         var value2 = "value2";
         var value3 = "value3";
 
         // when
-        Long newLength = client.rpush(key, value1, value2, value3);
+        Long newLength = client.lpush(key, value1, value2, value3);
 
         // then
         assertEquals(3L, newLength);
-        assertEquals(List.of(value1, value2, value3), client.lrange(key, 0, -1));
+        assertEquals(List.of(value3, value2, value1), client.lrange(key, 0, 2));
     }
 
     @Test
     void shouldReturnCorrectNumberOfElements() {
         // given
         var key = "correctElements";
-        client.rpush(key, "a", "b");
+        client.lpush(key, "a", "b");
 
         // when
-        Long newLength = client.rpush(key, "c", "d");
+        Long newLength = client.lpush(key, "c", "d");
 
         // then
         assertEquals(4L, newLength);
-        assertEquals(List.of("a", "b", "c", "d"), client.lrange(key, 0, -1));
+        assertEquals(List.of("d", "c", "b", "a"), client.lrange(key, 0, -1));
     }
+
 
     @Test
     void shouldFailWithWrongType() {
@@ -72,7 +73,7 @@ public class RPUSHStrategyTest extends RedisTestContainer {
 
         // then
         assertThrows(RedisCommandExecutionException.class,
-                () -> client.rpush(key, "listArg"),
+                () -> client.lpush(key, "listArg"),
                 WRONG_TYPE
         );
     }
