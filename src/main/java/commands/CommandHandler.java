@@ -9,6 +9,7 @@ import commands.strategies.streams.XREADStrategy;
 import commands.strategies.strings.GETStrategy;
 import commands.strategies.strings.INCRStrategy;
 import commands.strategies.strings.SETStrategy;
+import commands.strategies.transactional.DISCARDStrategy;
 import commands.strategies.transactional.EXECStrategy;
 import commands.strategies.transactional.MULTIStrategy;
 import commands.transaction.TransactionManager;
@@ -54,7 +55,8 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
                 entry(TYPE, new TYPEStrategy(kvStore)),
                 entry(XRANGE, new XRANGEStrategy(kvStore)),
                 entry(INCR, new INCRStrategy(kvStore)),
-                entry(MULTI, new MULTIStrategy(clientManager))
+                entry(MULTI, new MULTIStrategy(clientManager)),
+                entry(DISCARD, new DISCARDStrategy(clientManager))
         ));
 
         strategies.put(BLPOP, new BLPOPStrategy(kvStore, this));
@@ -71,10 +73,12 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
 
         var strategy = strategies.getOrDefault(fromString(command), null);
 
-        if (clientManager.isInTransaction(clientSocket) && !(strategy instanceof EXECStrategy)) {
-            clientManager.queueCommand(args, clientSocket);
-            asyncCommandObserver.onResponseReady(clientSocket, ByteBuffer.wrap(QUEUED.getBytes()));
-            return;
+        if (clientManager.isInTransaction(clientSocket)) {
+            if (!(strategy instanceof EXECStrategy || strategy instanceof DISCARDStrategy)) {
+                clientManager.queueCommand(args, clientSocket);
+                asyncCommandObserver.onResponseReady(clientSocket, ByteBuffer.wrap(QUEUED.getBytes()));
+                return;
+            }
         }
 
         switch (strategy) {

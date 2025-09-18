@@ -20,6 +20,7 @@ public enum Command {
     INCR("incr"),
     MULTI("multi"),
     EXEC("exec"),
+    DISCARD("discard"),
     SUBSCRIBE("subscribe"),
     NO_COMMAND("no_command");
 

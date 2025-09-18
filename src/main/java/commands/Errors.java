@@ -19,6 +19,7 @@ public class Errors {
     public static final String NOT_AN_INTEGER = "ERR value is not an integer or out of range";
     public static final String NESTED_TRANSACTIONS_ERROR = "ERR MULTI calls can not be nested";
     public static final String EXEC_WITHOUT_TRANSACTION = "ERR EXEC without MULTI";
+    public static final String DISCARD_WITHOUT_TRANSACTION = "ERR DISCARD without MULTI";
 
     public static ByteBuffer checkArgNumber(List<String> args, int minArgs) {
         return checkArgNumber(args, minArgs, Integer.MAX_VALUE);
