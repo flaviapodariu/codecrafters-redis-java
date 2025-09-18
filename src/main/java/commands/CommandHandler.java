@@ -71,6 +71,12 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
 
         var strategy = strategies.getOrDefault(fromString(command), null);
 
+        if (clientManager.isInTransaction(clientSocket) && !(strategy instanceof EXECStrategy)) {
+            clientManager.queueCommand(args, clientSocket);
+            asyncCommandObserver.onResponseReady(clientSocket, ByteBuffer.wrap(QUEUED.getBytes()));
+            return;
+        }
+
         switch (strategy) {
             case null -> {
                 String error = String.format("Command %s does not exist", command);

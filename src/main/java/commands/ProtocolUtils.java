@@ -23,6 +23,7 @@ public class ProtocolUtils {
     public static String BULK_ERROR = "!";
 
     public static String OK = "+OK\r\n";
+    public static String QUEUED = "+QUEUED\r\n";
 
 
     /**

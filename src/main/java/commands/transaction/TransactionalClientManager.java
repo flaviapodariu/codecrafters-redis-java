@@ -22,6 +22,10 @@ public class TransactionalClientManager {
         this.transactions.put(channel, new LinkedList<>());
     }
 
+    public void queueCommand(List<String> command, SocketChannel channel) {
+        this.transactions.get(channel).add(command);
+    }
+
     public void removeTransaction(SocketChannel channel) {
         this.transactions.remove(channel);
     }
