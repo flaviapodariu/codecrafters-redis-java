@@ -8,6 +8,7 @@ import commands.async.BlockingClientManager;
 import commands.ProtocolUtils;
 import commands.async.UnblockingMethod;
 import commands.exceptions.CommandExecutionException;
+import commands.transaction.TransactionalCommandStrategy;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import store.KeyValueStore;
@@ -23,7 +24,7 @@ import static commands.ProtocolUtils.NULL_STRING;
 
 @Slf4j
 @AllArgsConstructor
-public class BLPOPStrategy implements AsyncCommandStrategy, CommandStrategy {
+public class BLPOPStrategy implements AsyncCommandStrategy, TransactionalCommandStrategy {
 
     private final KeyValueStore kvStore;
     private final BlockingClientManager blockingClientManager;
@@ -78,7 +79,7 @@ public class BLPOPStrategy implements AsyncCommandStrategy, CommandStrategy {
     }
 
     @Override
-    public ByteBuffer execute(List<String> args) {
+    public ByteBuffer execute(List<String> args, SocketChannel channel) {
         // todo
         return ByteBuffer.wrap(NULL_STRING.getBytes());
     }

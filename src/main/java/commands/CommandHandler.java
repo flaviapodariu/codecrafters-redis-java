@@ -70,6 +70,7 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
         var command = args.getFirst().toUpperCase();
 
         var strategy = strategies.getOrDefault(fromString(command), null);
+
         switch (strategy) {
             case null -> {
                 String error = String.format("Command %s does not exist", command);
@@ -90,13 +91,24 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
         }
     }
 
-    public ByteBuffer executeInTransaction(List<String> args) {
+    /**
+     * Method forces async commands to behave like synchronous commands by returning instantly,
+     * whether they have a response prepared or not
+     * @param args the args to call the command inside this transaction
+     * @param clientSocket the client socket channel involved in this transaction
+     * @return the command's response
+     */
+    public ByteBuffer executeInTransaction(List<String> args, SocketChannel clientSocket) {
         var command = args.getFirst().toUpperCase();
 
         var strategy = strategies.getOrDefault(fromString(command), null);
 
-        if (strategy instanceof CommandStrategy syncCommand) {
-            return syncCommand.execute(args.subList(1, args.size()));
+        if (strategy instanceof CommandStrategy cs) {
+            return cs.execute(args.subList(1, args.size()));
+        }
+
+        if (strategy instanceof TransactionalCommandStrategy tcs) {
+            return tcs.execute(args.subList(1, args.size()), clientSocket);
         }
         // todo what happens here?
         return null;
@@ -182,7 +194,7 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
     public ByteBuffer onExecuteTransaction(List<List<String>> commandList, SocketChannel channel) {
         var transactionResult = new ArrayList<ByteBuffer>();
         commandList.forEach(command -> {
-                var commandResult = executeInTransaction(command);
+                var commandResult = executeInTransaction(command, channel);
                 transactionResult.add(commandResult);
         });
 

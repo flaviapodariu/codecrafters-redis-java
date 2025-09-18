@@ -35,6 +35,7 @@ public class EXECStrategy implements TransactionalCommandStrategy {
         }
 
         var commands = clientManager.getCommands(channel);
+        clientManager.removeTransaction(channel); //todo here?
         return this.transactionManager.onExecuteTransaction(commands, channel);
     }
 }
