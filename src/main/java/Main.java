@@ -1,7 +1,9 @@
+import server.ArgumentParser;
 import server.RedisServer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 @Slf4j
 public class Main {
@@ -9,8 +11,12 @@ public class Main {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.out.println("Logs from your program will appear here!");
 
-        int port = 6379;
-        var client = new RedisServer("0.0.0.0", port);
+        var argParser = new ArgumentParser();
+        argParser.parseArgs(args);
+
+        int port = argParser.getPort();
+        String host = argParser.getHost();
+        var client = new RedisServer(host, port);
 
         try {
             client.run();
