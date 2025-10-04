@@ -1,27 +1,29 @@
 package server;
 
 import parser.Parser;
+import server.info.ClientsInfo;
+import server.info.ReplicationInfo;
+import server.info.ServerInfo;
 import store.KeyValueStore;
 
 import java.io.IOException;
 
 public class RedisServer {
 
-    private final String host;
-    private final int port;
+    private final Configuration configuration;
 
-    public RedisServer(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public RedisServer(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     public void run() throws IOException {
         KeyValueStore kvStore = new KeyValueStore();
         Parser parser = new Parser();
 
-        EventLoop eventLoop = new EventLoop(parser, kvStore);
+        EventLoop eventLoop = new EventLoop(parser, kvStore, configuration);
 
-        eventLoop.configure(this.host, this.port);
+        var port = configuration.getServerInfo().getTcpPort();
+        eventLoop.configure("0.0.0.0", port);
         eventLoop.run();
     }
 

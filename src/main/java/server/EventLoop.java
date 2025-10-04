@@ -31,10 +31,12 @@ class EventLoop implements AsyncCommandObserver {
 
     private final CommandHandler executor;
     private final Parser parser;
+    private final Configuration nodeConfiguration;
 
-    public EventLoop(Parser parser, KeyValueStore kvStore) {
+    public EventLoop(Parser parser, KeyValueStore kvStore,  Configuration configuration) {
         this.parser = parser;
         this.executor = new CommandHandler(kvStore, this);
+        this.nodeConfiguration = configuration;
     }
 
     /**

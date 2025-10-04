@@ -56,7 +56,8 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
                 entry(XRANGE, new XRANGEStrategy(kvStore)),
                 entry(INCR, new INCRStrategy(kvStore)),
                 entry(MULTI, new MULTIStrategy(clientManager)),
-                entry(DISCARD, new DISCARDStrategy(clientManager))
+                entry(DISCARD, new DISCARDStrategy(clientManager)),
+                entry(INFO, new INFOStrategy())
         ));
 
         strategies.put(BLPOP, new BLPOPStrategy(kvStore, this));

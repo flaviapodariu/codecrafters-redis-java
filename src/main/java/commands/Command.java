@@ -22,6 +22,7 @@ public enum Command {
     EXEC("exec"),
     DISCARD("discard"),
     SUBSCRIBE("subscribe"),
+    INFO("info"),
     NO_COMMAND("no_command");
 
     private final String commandName;
