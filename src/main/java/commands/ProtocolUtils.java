@@ -1,7 +1,8 @@
 package commands;
 
+import server.Configuration;
+
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,25 @@ public class ProtocolUtils {
         });
 
         return sb.toString();
+    }
+
+    public static String encodeConfigurationSection(Map<String, String> section) {
+        var sb = new StringBuilder();
+        section.forEach( (config, value) -> {
+            sb.append(config).append(":").append(value).append(TERMINATOR);
+        });
+        return bulkEncode(sb.toString(), BULK_STRING);
+    }
+
+    public static String encodeFullConfiguration(Map<String, Map<String, String>> fullConfig) {
+        var sb = new StringBuilder();
+        fullConfig.forEach( (section, sectionConfig) -> {
+            sb.append("# ").append(section).append(TERMINATOR);
+            sectionConfig.forEach((config, value) -> {
+                sb.append(config).append(":").append(value).append(TERMINATOR);
+            });
+        });
+        return bulkEncode(sb.toString(), BULK_STRING);
     }
 
 

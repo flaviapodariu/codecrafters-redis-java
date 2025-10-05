@@ -18,6 +18,7 @@ import commands.transaction.TransactionalCommandStrategy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import server.Configuration;
 import store.KeyValueStore;
 
 import java.nio.ByteBuffer;
@@ -41,7 +42,7 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
     private final Map<String, List<BlockedClient>> waitingClients = new ConcurrentHashMap<>();
     private final TransactionalClientManager clientManager = new TransactionalClientManager();
 
-    public CommandHandler(KeyValueStore kvStore, AsyncCommandObserver observer) {
+    public CommandHandler(KeyValueStore kvStore, AsyncCommandObserver observer, Configuration configuration) {
         this.strategies = new HashMap<>(Map.ofEntries(
                 entry(COMMAND, new DOCSStrategy()),
                 entry(PING, new PINGStrategy()),
@@ -57,7 +58,7 @@ public class CommandHandler implements BlockingClientManager, TransactionManager
                 entry(INCR, new INCRStrategy(kvStore)),
                 entry(MULTI, new MULTIStrategy(clientManager)),
                 entry(DISCARD, new DISCARDStrategy(clientManager)),
-                entry(INFO, new INFOStrategy())
+                entry(INFO, new INFOStrategy(configuration))
         ));
 
         strategies.put(BLPOP, new BLPOPStrategy(kvStore, this));

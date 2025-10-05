@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static server.Configuration.*;
+
 @Slf4j
 public class Main {
   public static void main(String[] args){
@@ -45,17 +47,19 @@ public class Main {
   private static void configureServer(Configuration nodeConfig, Map<String, String> customProperties) {
       customProperties.forEach( (k, v) -> {
           switch (k) {
-              case "port" -> nodeConfig.getServerInfo().setTcpPort(Integer.parseInt(v));
+              case "port" -> nodeConfig.getServer().put(TCP_PORT, v);
               case "replicaof" -> {
                   var masterInfo = v.split(" ");
                   var host = masterInfo[0];
-                  var port = Integer.parseInt(masterInfo[1]);
-                  var connSlaves = nodeConfig.getReplicationInfo().getConnectedSlaves();
+                  var port = masterInfo[1];
+                  var connSlaves = Integer.parseInt(
+                          nodeConfig.getReplication().get(CONNECTED_SLAVES)
+                  ) + 1;
 
-                  nodeConfig.getReplicationInfo().setRole("slave");
-                  nodeConfig.getReplicationInfo().setConnectedSlaves(connSlaves+1);
-                  nodeConfig.getReplicationInfo().setMasterHost(host);
-                  nodeConfig.getReplicationInfo().setMasterPort(port);
+                  nodeConfig.getReplication().put(ROLE, "slave");
+                  nodeConfig.getReplication().put(CONNECTED_SLAVES, String.valueOf(connSlaves));
+                  nodeConfig.getReplication().put(MASTER_HOST, host);
+                  nodeConfig.getReplication().put(MASTER_PORT, port);
               }
           }
       });

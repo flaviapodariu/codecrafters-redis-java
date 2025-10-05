@@ -13,5 +13,4 @@ public class ReplicationInfo {
     private int connectedSlaves = 0;
     private String masterHost = "localhost";
     private int masterPort = 6379;
-
 }

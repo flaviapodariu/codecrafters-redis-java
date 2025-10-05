@@ -1,12 +1,11 @@
 package server;
 
 import parser.Parser;
-import server.info.ClientsInfo;
-import server.info.ReplicationInfo;
-import server.info.ServerInfo;
 import store.KeyValueStore;
 
 import java.io.IOException;
+
+import static server.Configuration.TCP_PORT;
 
 public class RedisServer {
 
@@ -22,8 +21,8 @@ public class RedisServer {
 
         EventLoop eventLoop = new EventLoop(parser, kvStore, configuration);
 
-        var port = configuration.getServerInfo().getTcpPort();
-        eventLoop.configure("0.0.0.0", port);
+        var port = configuration.getServer().get(TCP_PORT);
+        eventLoop.configure("0.0.0.0", Integer.parseInt(port));
         eventLoop.run();
     }
 
