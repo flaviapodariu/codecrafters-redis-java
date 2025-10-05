@@ -1,6 +1,7 @@
 import server.Configuration;
 import server.RedisServer;
 import lombok.extern.slf4j.Slf4j;
+import server.ReplicationConnection;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -60,9 +61,11 @@ public class Main {
                   nodeConfig.getReplication().put(CONNECTED_SLAVES, String.valueOf(connSlaves));
                   nodeConfig.getReplication().put(MASTER_HOST, host);
                   nodeConfig.getReplication().put(MASTER_PORT, port);
+
+                  var masterConnection = new ReplicationConnection(nodeConfig);
+                  masterConnection.startReplicaConnection();
               }
           }
       });
-
   }
 }
