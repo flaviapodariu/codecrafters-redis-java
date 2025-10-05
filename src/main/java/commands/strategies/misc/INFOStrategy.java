@@ -31,7 +31,8 @@ public class INFOStrategy implements CommandStrategy {
             );
         }
 
-        var infoSection = args.getFirst();
+        var infoSection = args.getFirst().toLowerCase();
+
         if (!fullConfig.containsKey(infoSection)) {
             return ByteBuffer.wrap(
                     ProtocolUtils.encode("").getBytes()

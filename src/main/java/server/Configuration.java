@@ -30,10 +30,10 @@ public class Configuration {
 
     public Map<String, Map<String, String>> getFullConfig() {
         var fullConfig = new HashMap<String, Map<String, String>>();
-        fullConfig.put("Clients", this.clients);
-        fullConfig.put("Replication", this.replication);
-        fullConfig.put("Server", this.server);
-        fullConfig.put("Memory",this.memory);
+        fullConfig.put("clients", this.clients);
+        fullConfig.put("replication", this.replication);
+        fullConfig.put("server", this.server);
+        fullConfig.put("memory", this.memory);
         return fullConfig;
     }
 
